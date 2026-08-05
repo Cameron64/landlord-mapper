@@ -275,9 +275,16 @@ server <- function(input, output, session) {
     }
     print(props_inds_used)
     group_assign_used <- unique(owners_info_total$group_assign[props_inds_used])
+    #group_assign 0 is the sentinel for 'in no ownership group', not a group id,
+    #so leaving it in the membership test fans a single ungrouped parcel out to
+    #every other ungrouped parcel in the county
+    group_assign_used <- group_assign_used[group_assign_used!='0']
     print(group_assign_used)
+    #the searched-for rows are always kept, so an ungrouped selection still
+    #shows itself rather than nothing
     data_used <- dplyr::filter(owners_info_total,
-                  group_assign %in% group_assign_used)
+                  (group_assign %in% group_assign_used)|
+                    (dplyr::row_number() %in% props_inds_used))
     data_used$owners_used <- gsub('<br>$',
                                   '',
                                   paste(as.character(unique(data_used$owner_name)),
