@@ -1108,7 +1108,8 @@ situs_neighor_gen_final = function(owner_data_used,
   # Assign every parcel a landlord-portfolio group id.
   #
   # situs_neighbor_ind$situs_neighbors holds, per situs row, a space-separated
-  # list of owner_data_used ROW INDICES that share that row's situs address. Two
+  # list of owner_data_used ROW INDICES linked to that situs row by a shared
+  # owner-side value -- not by address; see the artefact note below. Two
   # parcels belong to the same portfolio when they are reachable from each other
   # through those shared rows, so the grouping is the transitive closure of
   # "co-listed in some situs row" -- exactly the connected components of the
