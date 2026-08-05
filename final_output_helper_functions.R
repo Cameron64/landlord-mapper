@@ -1154,12 +1154,21 @@ situs_neighor_gen_final = function(owner_data_used,
   # component.
   #
   # KNOWN DATA ARTEFACT, deliberately not papered over here: the largest
-  # component is 65,878 parcels spanning 30,250 situs rows, and its widest rows
-  # are street-only addresses carrying no house number ("GUILBEAU RD SAN ANTONIO
-  # 78250", "S LAREDO ST SAN ANTONIO 78207"). Parcels missing a house number
-  # normalise onto a bare street name, which chains unrelated owners together.
-  # That is an upstream address-normalisation problem in situs_neighor_gen; it is
-  # not fixed by capping component size here, because a cap would invent a
+  # component is tens of thousands of parcels, far larger than any real
+  # portfolio. An earlier note here blamed situs addresses carrying no house
+  # number. That is wrong, and it cost a round of design work, so to be explicit:
+  # situs_address is not a match column. Links come from the eight OWNER-side
+  # NEIGH_MATCH_COLS plus the cosine name block in situs_neighor_gen, and situs
+  # rows are keyed by (situs_pID, situs_address), so parcels never share a situs
+  # row by address. The backbone is non-discriminating owner-side addresses --
+  # shared office suites and PO boxes, which pass the nchar gate precisely
+  # because they are long -- mega-owner name hubs like CITY OF AUSTIN matching
+  # exactly and ungated on owner_name, and the cosine block, which is what makes
+  # components enormous rather than merely wrong. Dropping every situs row with
+  # no leading house number was measured and leaves the giant component 91%
+  # intact while costing 149,648 parcels their grouping; see the
+  # ownership-grouping design note for the per-edge-type counts. Capping
+  # component size here is still the wrong fix, because a cap would invent a
   # grouping policy this function has no basis to choose. The size distribution
   # is printed below so the artefact stays visible in the run log.
 
