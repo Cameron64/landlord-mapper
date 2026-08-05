@@ -351,7 +351,7 @@ server <- function(input, output, session) {
                                    paste(h4('Parent Entity Mail Address:'),
                                          data_used$corp_mail_address),
                                    paste(h4('Registered Agent:'),
-                                         data_used$corp_registered_agent_namena.omi),
+                                         data_used$corp_registered_agent_name),
                                    paste(h4('Registered Agent Address:'),
                                          data_used$corp_registered_agent_mail_address),
                                    paste(h4('Travis County Property Appraisal Info:'),
