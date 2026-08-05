@@ -753,6 +753,132 @@ parse_hays_cad_data = function(dir =  "austin_sanantonio",
   hays_data
 }
 
+# ---------------------------------------------------------------------------
+# Living-area segment classification for the PACS improvement detail.
+#
+# Replaces the single broad regex
+#   AREA|LIVING|HOTEL|APARTMENT|CONDO|HOME|PARK|DORM|RES
+# which counted parking lots, paving, detached garages and commercial storage
+# as living area in 8 of the 10 PACS districts. PARK matched PARKING & PAVING
+# as a substring (guadalupe: 69.5M sqft, 28% of its summed area), RES matched
+# GARAGE DETACHED RESIDENTIAL and CARPORT DETACHED RESIDENTIAL, AREA matched
+# COMMERCIAL STORAGE AREA. property_units derives from
+# totalsqftlivingarea / 900, so all of it became phantom housing units.
+#
+# Strict precedence per Imprv_det_type_desc (uppercased, trimmed):
+#
+#   1. LIVING_SEG_EXCEPTIONS[[county]]  literal, beats allow  -> EXCLUDE
+#   2. LIVING_SEG_ALLOW                 beats deny            -> KEEP
+#   3. LIVING_SEG_DENY                                        -> EXCLUDE
+#   4. anything else (residual)                               -> EXCLUDE
+#
+# Allow-beats-deny is load-bearing, not a convenience: GARAGE APARTMENT
+# (atascosa, bandera, guadalupe, kendall), DETACHED LIVING AREA 1/2 (bexar,
+# 8.4M sqft) and GUEST HOUSE DETACHED (comal, 1.3M) are genuine dwellings that
+# a plain deny list destroys. Tier 1 is the measured list of cases where that
+# ordering goes the wrong way.
+#
+# STORY must NOT be narrowed to RESIDENTIAL [0-9]+ STORY. Comal writes
+# RESIDENTIAL 1 1/2 STORY, 33.8M sqft, which fails the digit form. That is the
+# same trap that made a floors-only regex keep 3% of Comal.
+#
+# Tier 4 is deliberately excluded rather than kept, and every member of it is
+# enumerated per district with its row count and summed area in
+# /home/cam/lm-sqft-audit/keeplist_residual_report.md. The tier definitions
+# below are mirrored in /home/cam/lm-phase1/tiers.py, which generates it.
+#
+# Travis is NOT handled here. It is excluded from the county list in
+# ingest_proton_pacs_cad_data() and gets its living area from
+# TRAVIS_LIVING_SEGMENTS. Hays and Williamson ship no PACS detail file.
+# ---------------------------------------------------------------------------
+LIVING_SEG_ALLOW <- paste(c("\\bFLOOR\\b",
+                            "LIVING",
+                            "APARTMENT",
+                            "CONDO",
+                            "DWELL",
+                            "RESIDENCE",
+                            "MAIN AREA",
+                            "MAIN FLOOR RESIDENTIAL",
+                            "PENTHOUSE",
+                            "DORM",
+                            "HOTEL",
+                            "STORY",
+                            "MOBILE HOME",
+                            "MANUFACTURED",
+                            "CABIN",
+                            "GUEST *HOUSE",
+                            "\\bLA\\b"),
+                          collapse = "|")
+
+LIVING_SEG_DENY <- paste(c("PARKING",
+                           "PAVING",
+                           "PAVED",
+                           "POOL",
+                           "DECK",
+                           "PATIO",
+                           "PORCH",
+                           "CANOPY",
+                           "CARPORT",
+                           "DETACHED",
+                           "\\bDET\\b",
+                           "\\bSHED\\b",
+                           "BARN",
+                           "SKETCH ONLY",
+                           "BATHROOM",
+                           "HVAC"),
+                         collapse = "|")
+
+# Keyed on the district folder name, which is exactly what
+# ingest_proton_pacs_cad_data() passes as `county`. Every entry was measured
+# against that district vocabulary; the sqft is the area it wrongly kept.
+LIVING_SEG_EXCEPTIONS <- list(
+  `BEXAR COUNTY APPRAISAL DISTRICT+` = c("HOTEL BSMT PARKING",        #    228,325
+                                         "ATTACHED 2ND STORY PORCH",  #  1,835,125
+                                         "ATTACHED 2ND STORY DECK",   #  1,070,489
+                                         "ATTACHED 3RD STORY PORCH",  #     88,774
+                                         "MECHANICAL PENTHOUSE",      #    316,817
+                                         "2ND STORY UTIL"),           #    330,961
+  `CALDWELL COUNTY APPRAISAL DISTRICT+` = c("SCREEN PORCH SECOND FLOOR"),
+  `COMAL COUNTY APPRAISAL DISTRICT+` = c("MOBILE HOME WOOD DECK 1",     # 380,690
+                                         "MOBILE HOME WOOD DECK 2",     # 107,261
+                                         "MOBILE HOME COVERED PATIO",   # 340,032
+                                         "MOBILE HOME STORAGE 1",       # 264,394
+                                         "MOBILE HOME STORAGE 2",       # 103,791
+                                         "MOBILE HOME STORAGE 3",       #  65,237
+                                         "MOBILE HOME CARPORT GOOD",    # 181,250
+                                         "MOBILE HOME CARPORT FAIR",    # 100,225
+                                         "MOBILE HOME CARPORT AVERA",   #  98,350
+                                         "MOBILE HOME CARPORT LOW",     #  94,809
+                                         "MOBILE HOME FINISHED GARA",   # 135,061
+                                         "MOBILE HOME UN-FINISHED G",   #  95,549
+                                         "MOBILE HOME OPEN PORCH 1",    # 121,624
+                                         "MOBILE HOME OPEN PORCH 2",    #  73,291
+                                         "MOBILE HOME SCREEN PORCH",    #  36,798
+                                         "MANUFACTURED HOME PARK SI"),  #   1,738
+  `GUADALUPE COUNTY APPRAISAL DISTRICT+` = c("APARTMENT POOL"),
+  `KENDALL COUNTY APPRAISAL DISTRICT+` = c("SECOND FLOOR PORCH",         #  10,344
+                                           "2ND FLOOR STORAGE"),        #  21,472
+  `MEDINA COUNTY APPRAISAL DISTRICT+` = c("PORCH 2ND STORY")            # 101,322
+)
+
+# Returns one of exception / allow / deny / residual per element of `desc`.
+# Only "allow" is summed into living area; the other three are excluded, and
+# the split is kept explicit so the audit script and this filter agree.
+classify_living_area_segment = function(desc,
+                                        county){
+  u <- toupper(trimws(as.character(desc)))
+  out <- ifelse(grepl(LIVING_SEG_ALLOW, u),
+                "allow",
+                ifelse(grepl(LIVING_SEG_DENY, u),
+                       "deny",
+                       "residual"))
+  excluded <- LIVING_SEG_EXCEPTIONS[[county]]
+  if(!is.null(excluded)){
+    out[u %in% toupper(trimws(excluded))] <- "exception"
+  }
+  out
+}
+
 ingest_cad_zip_data = function(zipfile,
                                dir,
                                county){
@@ -848,14 +974,16 @@ ingest_cad_zip_data = function(zipfile,
                            ) %>%
     mutate(prop_val_yr = as.numeric(prop_val_yr))
 
+  # local copy so a data column named `county` cannot shadow the parameter
+  county_used <- county
   improvement_data <- data.frame(foreach(file = improvement_file,
                                    .combine = 'rbind') %do% {
                                      ingest_pacs_txt_data(file,
                                                           improvement_fields)
                                    }
                                   ) %>%
-    dplyr::filter(grepl("AREA|LIVING|HOTEL|APARTMENT|CONDO|HOME|PARK|DORM|RES",
-                        toupper(Imprv_det_type_desc)),
+    dplyr::filter(classify_living_area_segment(Imprv_det_type_desc,
+                                               county_used) == 'allow',
                   !Imprv_det_type_cd=='RMS')%>%
     mutate(propertyProf_imprvTotalArea = imprv_det_area,
            prop_val_yr = as.numeric(prop_val_yr)
