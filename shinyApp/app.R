@@ -32,6 +32,13 @@ owners_info_total <- cbind(owners_info_total[,owners_info_situs_cols],
 
 owners_info_d3graph <- readRDS('owners_info_d3graph.rds')
 
+#leaflet draws one image marker and one full popup per parcel, so a selection of
+#more than a few thousand rows hangs the browser instead of showing anything
+#readable. nothing legitimate is lost at this cap: the largest real portfolio is
+#2,883 parcels and only one of the 221,514 groups runs past 5,000 -- the known
+#artefact component -- plus group_assign '0', which is the no-group sentinel
+map_max_markers <- 5000
+
 
 address_clean = function(situs_address){
   
@@ -371,6 +378,18 @@ server <- function(input, output, session) {
     }
     groups_fnd <- unique(owner_data$group_assign)
     print(groups_fnd)
+    #a group count does not bound the marker count, so cap the rows as well
+    if(nrow(owner_data)>map_max_markers){
+      print('rows')
+      showNotification(sprintf('This search covers %s properties; the map draws at most %s. Narrow it to a single address, owner, or group.',
+                               format(nrow(owner_data),
+                                      big.mark = ','),
+                               format(map_max_markers,
+                                      big.mark = ',')),
+                       duration = 10,
+                       type = 'warning')
+      return(map_previous)
+    }
     if(input$propertyFilter1=='1'){
       if(length(groups_fnd)>1){
         print('groups')
