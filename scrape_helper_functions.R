@@ -2182,7 +2182,7 @@ owner_scrape_actual = function(austin_parcel_data_merged
     target_properties = dplyr::filter(austin_parcel_data_merged,
                                       ((is_financialized ==TRUE)&
                                          (is_owner_occupied==FALSE))|
-                                        (property_units>5),
+                                        (property_units>4),
                                       property_units!=0)
     # Resume: drop parcels already recorded. consolidate_owner_parts() above has
     # already folded in part files from an interrupted run, so this sees them.
