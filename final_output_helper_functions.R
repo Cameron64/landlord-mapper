@@ -837,6 +837,51 @@ NEIGH_GATED_COLS <- c("owner_address_scraped",
                       "corp_mail_address",
                       "corp_registered_agent_mail_add")
 
+# Evidence class id of the cosine-distance block: one more than the eight
+# columns, so class ids 1..8 are positions in NEIGH_MATCH_COLS and this is the
+# ninth. The three cosine query forms are ONE mechanism and share this id.
+NEIGH_COSINE_CLASS <- length(NEIGH_MATCH_COLS) + 1L
+
+# --- asymmetric corroboration (ASYM-cosreq) ---------------------------------
+# Evidence is split by CLASS, and only one half is trusted on its own.
+#
+# NAME class -- the four owner/corp NAME columns, i.e. NEIGH_MATCH_COLS minus
+# NEIGH_GATED_COLS -- is SINGLE-SUFFICIENT. A shared exact name contributes one
+# distinct owner name to whatever component it builds, so it cannot by itself
+# breach the distinct-owner-name ceiling that bounds a plausible portfolio.
+#
+# ADDRESS class -- exactly NEIGH_GATED_COLS -- is NOT. A shared owner-side
+# address is usually an office suite, a PO box, or a registered-agent drop
+# shared by unrelated landlords, so an address link is kept only when a second,
+# DISTINCT evidence class independently connects the same
+# (querying situs group, target parcel) pair.
+#
+# WHY the cosine block is corroborated too, which is the counter-intuitive part
+# and the thing a future reader will be tempted to "simplify" away: cosine is a
+# FUZZY name match, so treating it as single-sufficient lets near-name chaining
+# walk from portfolio to portfolio. Measured, that produces a 19,402-21,118
+# parcel component holding 5,364-5,734 distinct owner names -- and it still
+# satisfies the housing-authority, negative-control and CITY-OF-AUSTIN checks,
+# so only the distinct-owner-name ceiling catches it. Cosine therefore sits on
+# the corroborated side with the address columns, and must stay there.
+NEIGH_FREE_CLASSES <- which(!(NEIGH_MATCH_COLS %in% NEIGH_GATED_COLS))
+
+# Distinct evidence classes required to keep a corroborated-class link.
+NEIGH_CORROB_MIN_CLASSES <- 2L
+
+# Self-edges -- the target parcel already sits in the querying situs group --
+# are exempt from corroboration: the link is the group's own definition, not
+# new evidence, and dropping it only costs grouping.
+NEIGH_CORROB_EXEMPT_SELF <- TRUE
+
+# Hub cap on the gated columns: an address value linking more than this many
+# DISTINCT owner names is a shared drop box, not a portfolio, and is discarded
+# before corroboration is counted. Measured cost of 20 is 1 extra ungrouped
+# parcel and 872 extra parcels shattered to singletons; the benefit is that the
+# worst component falls from 127 to 85 distinct owner names, widening the margin
+# under the 150 ceiling from 23 to 65.
+NEIGH_MAX_OWNER_NAMES_PER_GATED_VALUE <- 20L
+
 # Value -> row-indices index in CSR form.
 #
 # WHY not split(seq_len(n), col): split would materialise a list with one R
@@ -860,6 +905,48 @@ neigh_rows_for <- function(ix, vsel) {
   len <- ix$off[vsel + 1L] - ix$off[vsel]
   list(rows = ix$rows[sequence(len, from = ix$off[vsel] + 1L)],
        len  = len)
+}
+
+# Distinct owner names behind each distinct value of a column, over the WHOLE
+# owner frame rather than the kept subset, because the hub cap is a property of
+# the value itself. Returned parallel to vid, i.e. indexable by value id.
+#
+# WHY sort-then-flag rather than tapply/split: one radix sort over the pair
+# (value id, owner-name id) and a single tabulate() of the group-starts, so the
+# whole column is two passes and no per-value R object is allocated.
+neigh_distinct_owners <- function(vid, own_id, n_values) {
+  o <- order(vid, own_id, method = "radix")
+  v <- vid[o]
+  w <- own_id[o]
+  n <- length(v)
+  if (!n) return(integer(n_values))
+  first <- c(TRUE, (v[-1L] != v[-n]) | (w[-1L] != w[-n]))
+  tabulate(v[first], nbins = n_values)
+}
+
+# Distinct evidence classes carrying each candidate link.
+#
+# For every edge, count how many DISTINCT classes in `class_id` connect that
+# edge's own (group_id, target_row) pair. Both id spaces are 32-bit row/group
+# indices, so packing them into one double is exact and lets a single radix sort
+# put every edge sharing a pair next to every other, ordered by class within the
+# pair. Group starts then give the pair boundaries and class changes inside a
+# pair give the distinct-class count, so the whole thing is one sort and one
+# tabulate over the pool -- no pair-keyed hash table and nothing quadratic.
+neigh_class_witnesses <- function(group_id, target_row, class_id) {
+  n <- length(class_id)
+  if (!n) return(integer(0))
+  key <- as.numeric(group_id) * 2147483648 + as.numeric(target_row)
+  o   <- order(key, class_id, method = "radix")
+  ks  <- key[o]
+  cs  <- class_id[o]
+  new_pair  <- c(TRUE, ks[-1L] != ks[-n])
+  pair_id   <- cumsum(new_pair)
+  new_class <- new_pair | c(TRUE, cs[-1L] != cs[-n])
+  per_pair  <- tabulate(pair_id[new_class], nbins = pair_id[[n]])
+  out <- integer(n)
+  out[o] <- per_pair[pair_id]
+  out
 }
 
 # Suffix index over the cosine matrix's colname pIDs.
@@ -936,6 +1023,17 @@ situs_neighor_gen = function(situs_owner_cosine_dist_matrix,
   cat("situs_neighor_gen:", length(kept_rows), "rows kept,",
       n_groups, "groups\n")
 
+  # Group id per row of the WHOLE frame (0 for rows outside the block), so the
+  # corroboration pass can ask whether an edge's target already belongs to the
+  # querying group. Non-kept rows keep 0 and group ids start at 1, so they can
+  # never be mistaken for a self-edge.
+  gid_full <- integer(n_rows)
+  gid_full[kept_rows] <- gid
+
+  # Owner-name identity per row, for the gated-column hub cap.
+  own_id <- match(owner_data_used$owner_name,
+                  unique(owner_data_used$owner_name))
+
   # Rows of multi-row groups only, used for the gate-uniformity audit below.
   multi      <- which(lengths(gd$.rows) > 1L)
   multi_rows <- unlist(gd$.rows[multi], use.names = FALSE)
@@ -943,14 +1041,16 @@ situs_neighor_gen = function(situs_owner_cosine_dist_matrix,
   mixed_gate <- integer(0)
 
   # ---- the eight shared-value blocks --------------------------------------
-  edge_g <- vector("list", length(NEIGH_MATCH_COLS) + 1L)
-  edge_t <- vector("list", length(NEIGH_MATCH_COLS) + 1L)
+  edge_g <- vector("list", NEIGH_COSINE_CLASS)
+  edge_t <- vector("list", NEIGH_COSINE_CLASS)
+  hub_dropped <- integer(0)
 
   for (k in seq_along(NEIGH_MATCH_COLS)) {
     cname <- NEIGH_MATCH_COLS[[k]]
     full  <- owner_data_used[[cname]]
     ix    <- neigh_index(full)
     v     <- full[kept_rows]
+    v_vid <- match(v, ix$uv)
 
     # na.omit(gsub("^$", NA, unique(v))) in the original: NA and "" are never
     # members of the match set, so they can never link rows.
@@ -967,13 +1067,26 @@ situs_neighor_gen = function(situs_owner_cosine_dist_matrix,
       spread <- tapply(code, multi_gid, function(z) length(unique(z)))
       mixed_gate <- c(mixed_gate,
                       stats::setNames(sum(spread > 1L), cname))
+
+      # Hub cap. Applied to the CANDIDATE SET, before corroboration is counted,
+      # which is where the prototype applied it: dropping a hub value here is
+      # the same as dropping every edge it would have produced, and it also
+      # stops the hub acting as a witness for someone else's address link.
+      n_owners <- neigh_distinct_owners(match(full, ix$uv), own_id,
+                                        length(ix$uv))
+      hub      <- ok & (n_owners[v_vid] >
+                          NEIGH_MAX_OWNER_NAMES_PER_GATED_VALUE)
+      ok <- ok & !hub
+      hub_dropped <- c(hub_dropped,
+                       stats::setNames(length(unique(v_vid[hub])), cname))
+      rm(n_owners, hub)
     }
 
-    vsel <- match(v[ok], ix$uv)
+    vsel <- v_vid[ok]
     hit  <- neigh_rows_for(ix, vsel)
     edge_t[[k]] <- hit$rows
     edge_g[[k]] <- rep.int(gid[ok], hit$len)
-    rm(full, ix, v, ok, vsel, hit)
+    rm(full, ix, v, v_vid, ok, vsel, hit)
   }
   print(Sys.time())
 
@@ -1047,15 +1160,47 @@ situs_neighor_gen = function(situs_owner_cosine_dist_matrix,
     cos_t[[p]] <- dn
     cos_g[[p]] <- rep.int(i, length(dn))
   }
-  edge_t[[length(NEIGH_MATCH_COLS) + 1L]] <- unlist(cos_t, use.names = FALSE)
-  edge_g[[length(NEIGH_MATCH_COLS) + 1L]] <- unlist(cos_g, use.names = FALSE)
+  edge_t[[NEIGH_COSINE_CLASS]] <- unlist(cos_t, use.names = FALSE)
+  edge_g[[NEIGH_COSINE_CLASS]] <- unlist(cos_g, use.names = FALSE)
   rm(cos_t, cos_g, adj_i, adj_off, sufix, pid_ix)
   print(Sys.time())
 
-  # ---- union -> ascending -> dedup -> space join ---------------------------
+  # ---- asymmetric corroboration -------------------------------------------
+  # Keep a candidate link if its evidence class is single-sufficient, or if
+  # NEIGH_CORROB_MIN_CLASSES distinct classes carry the same
+  # (querying group, target parcel) pair, or if it is a self-edge. See the
+  # NEIGH_FREE_CLASSES note above for why the cosine block is NOT free.
+  #
+  # This runs on the pooled edge list, while class provenance still exists: once
+  # the blocks are unioned into the per-group token strings the class is gone,
+  # and downstream has no way to recover it.
   eg <- unlist(edge_g, use.names = FALSE)
   et <- unlist(edge_t, use.names = FALSE)
+  ec <- rep.int(seq_len(NEIGH_COSINE_CLASS), lengths(edge_g))
   rm(edge_g, edge_t)
+  invisible(gc())
+
+  witnesses <- neigh_class_witnesses(eg, et, ec)
+  keep_edge <- (ec %in% NEIGH_FREE_CLASSES) |
+               (witnesses >= NEIGH_CORROB_MIN_CLASSES)
+  if (NEIGH_CORROB_EXEMPT_SELF) {
+    keep_edge <- keep_edge | (gid_full[et] == eg)
+  }
+  cat("situs_neighor_gen: corroboration kept", sum(keep_edge), "of",
+      length(keep_edge), "candidate edges\n")
+  cat("situs_neighor_gen: edges kept per evidence class:",
+      paste(seq_len(NEIGH_COSINE_CLASS),
+            tabulate(ec[keep_edge], nbins = NEIGH_COSINE_CLASS),
+            sep = "=", collapse = " "), "\n")
+  cat("situs_neighor_gen: gated values dropped by the >",
+      NEIGH_MAX_OWNER_NAMES_PER_GATED_VALUE, "distinct-owner hub cap:",
+      paste(names(hub_dropped), hub_dropped, sep = "=", collapse = " "), "\n")
+  eg <- eg[keep_edge]
+  et <- et[keep_edge]
+  rm(ec, witnesses, keep_edge)
+  invisible(gc())
+
+  # ---- union -> ascending -> dedup -> space join ---------------------------
   o  <- order(eg, et, method = "radix")
   eg <- eg[o]; et <- et[o]; rm(o)
   neighbors <- character(n_groups)          # groups with no neighbour stay ""
@@ -1154,24 +1299,27 @@ situs_neighor_gen_final = function(owner_data_used,
   # identical vector, which the outer unique() collapses to one entry per
   # component.
   #
-  # KNOWN DATA ARTEFACT, deliberately not papered over here: the largest
-  # component is tens of thousands of parcels, far larger than any real
-  # portfolio. An earlier note here blamed situs addresses carrying no house
-  # number. That is wrong, and it cost a round of design work, so to be explicit:
+  # FORMER DATA ARTEFACT, now fixed upstream rather than here: the largest
+  # component used to be tens of thousands of parcels, far larger than any real
+  # portfolio. An earlier note blamed situs addresses carrying no house number.
+  # That is wrong, and it cost a round of design work, so to be explicit:
   # situs_address is not a match column. Links come from the eight OWNER-side
   # NEIGH_MATCH_COLS plus the cosine name block in situs_neighor_gen, and situs
   # rows are keyed by (situs_pID, situs_address), so parcels never share a situs
-  # row by address. The backbone is non-discriminating owner-side addresses --
+  # row by address. The backbone was non-discriminating owner-side addresses --
   # shared office suites and PO boxes, which pass the nchar gate precisely
-  # because they are long -- mega-owner name hubs like CITY OF AUSTIN matching
-  # exactly and ungated on owner_name, and the cosine block, which is what makes
-  # components enormous rather than merely wrong. Dropping every situs row with
-  # no leading house number was measured and leaves the giant component 91%
-  # intact while costing 149,648 parcels their grouping; see the
-  # ownership-grouping design note for the per-edge-type counts. Capping
-  # component size here is still the wrong fix, because a cap would invent a
-  # grouping policy this function has no basis to choose. The size distribution
-  # is printed below so the artefact stays visible in the run log.
+  # because they are long -- and the cosine block's fuzzy name matches, which is
+  # what made components enormous rather than merely wrong. Dropping every situs
+  # row with no leading house number was measured and left the giant component
+  # 91% intact while costing 149,648 parcels their grouping, so that was not the
+  # answer either; see the ownership-grouping design note for the per-edge-type
+  # counts. What fixed it is the asymmetric corroboration rule in
+  # situs_neighor_gen: address-class and cosine evidence now needs a second,
+  # distinct evidence class, so the hub edges that formed the backbone are gone
+  # before this function ever sees them. Capping component size HERE would still
+  # be the wrong fix, because a cap invents a grouping policy this function has
+  # no basis to choose. The size distribution is printed below so any regression
+  # stays visible in the run log.
 
   print(dim(owner_data_used))
   print(dim(situs_neighbor_ind))
@@ -1222,15 +1370,17 @@ situs_neighor_gen_final = function(owner_data_used,
   # Only parcels that appear in at least one neighbour list get a group; the rest
   # keep 0, so 0 keeps meaning "not grouped". Numbering runs largest component
   # first, preserving the old code's intent that group 1 is the biggest
-  # portfolio.
+  # portfolio, but see the warning on by_size below: the ids are not stable
+  # across builds.
   #
-  # Residual behaviour worth knowing before touching shinyApp/app.R: 1,443,757
-  # parcels are named in no neighbour list at all and so all share label 0.
+  # Residual behaviour worth knowing before touching shinyApp/app.R: roughly
+  # 1.5M parcels are named in no neighbour list at all and so all share label 0
+  # (the exact count is logged below and moves with the corroboration rule).
   # app.R filters with group_assign %in% group_assign_used, so selecting an
-  # ungrouped parcel matches all 1.44M of them. That is still far better than
-  # today, where the column is uniformly 0 and any selection matches every
-  # row, and it keeps the author's group_assign <- 0 convention. The clean fix
-  # belongs in app.R: drop 0 from group_assign_used.
+  # ungrouped parcel matches every one of them. That is still far better than
+  # the old constant-0 column, where any selection matched every row, and it
+  # keeps the author's group_assign <- 0 convention. The clean fix belongs in
+  # app.R: drop 0 from group_assign_used.
   parcel_membership <- membership[seq_len(n_parcels)]
   is_referenced     <- tabulate(parcel_ids, nbins = n_parcels) > 0L
   parcels_per_comp  <- tabulate(parcel_membership[is_referenced],
@@ -1240,6 +1390,12 @@ situs_neighor_gen_final = function(owner_data_used,
   # Largest first, ties broken by component id, so the labelling is
   # byte-identical across reruns by construction rather than by relying on
   # order() happening to be stable for the sort method in play.
+  # NOT a stable key: labels are positions in a largest-first ordering, so any
+  # change in component sizes renumbers every group after it. Deterministic for
+  # a given input (ties broken by component id rather than relying on order()
+  # being stable for the sort method in play), but do not persist a group id
+  # across builds or compare ids between two runs. A content-derived key is the
+  # fix and is deliberately not attempted here.
   by_size           <- occupied[order(-parcels_per_comp[occupied], occupied)]
   group_of          <- integer(length(parcels_per_comp))
   group_of[by_size] <- seq_along(by_size)
