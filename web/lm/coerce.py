@@ -1,5 +1,3 @@
-import hashlib
-
 def norm_pid(v):
     v = (v or "").strip()
     v = v.lstrip("0")
@@ -8,11 +6,11 @@ def norm_pid(v):
 def norm_txt(v):
     return " ".join((v or "").upper().split())
 
-def owner_key(name, addr):
-    return norm_txt(name) + "\x1f" + norm_txt(addr)
-
-def owner_id(name, addr):
-    return hashlib.sha1(owner_key(name, addr).encode("utf-8")).hexdigest()[:12]
+# owner_key/owner_id are deliberately NOT here. Minting an owner id belongs to
+# build-db.py, which has its own copy: the server must read parcel.owner_id
+# instead of deriving one, because the ownership grouping folds several owner
+# keys onto one owner row and the hash of that row's own name and address is then
+# not its id. Deriving it here served every parcel page a KeyError.
 
 def to_int(v):
     if isinstance(v, int):

@@ -4,7 +4,7 @@ import sqlite3
 import threading
 import time
 import urllib.parse
-from lm.coerce import norm_pid, norm_txt, owner_id
+from lm.coerce import norm_pid, norm_txt
 from lm.config import HUB_AGENT, HUB_MAIL, HUB_OFFICER, MAX_HITS, MAX_HOP1, MAX_HOP2
 from lm.schema import P
 from lm.scope import parcel_in_scope
@@ -70,6 +70,14 @@ class ParcelRows:
     helpers pays for one query, and warm() turns a whole table page into a single
     query. The database is read-only and static, so a cached row can never go
     stale while the process lives.
+
+    The row's owner_id is cached beside the record rather than inside it, because
+    the record is PARCEL_COLS-shaped and the CSV export counts on that width. It
+    is read here so no caller has to derive it: parcel.owner_id is the stored
+    join key, and re-deriving it from the owner name and mailing address is not
+    equivalent -- the pipeline's ownership grouping folds several owner keys onto
+    one surviving owner row, so the hash of that row's own name and address is
+    not its id.
     """
 
     def __init__(self, db):
@@ -82,32 +90,51 @@ class ParcelRows:
             c = self.local.c = {}
         return c
 
+    def oid_cache(self):
+        c = getattr(self.local, "o", None)
+        if c is None:
+            c = self.local.o = {}
+        return c
+
     def warm(self, idxs):
         c = self.cache()
         want = [i for i in idxs if i not in c]
         if not want:
             return
+        oc = self.oid_cache()
         if len(c) > 4000:
             c.clear()
+            oc.clear()
         for n in range(0, len(want), 500):
             chunk = want[n:n + 500]
             qs = ",".join("?" * len(chunk))
             for row in self.db.all(
-                    "SELECT p.rowid, " + PARCEL_SQL + " " + PARCEL_FROM
-                    + "WHERE p.rowid IN (%s)" % qs,
+                    "SELECT p.rowid, p.owner_id, " + PARCEL_SQL + " "
+                    + PARCEL_FROM + "WHERE p.rowid IN (%s)" % qs,
                     [i + 1 for i in chunk]):
-                c[row[0] - 1] = tuple(row[1:])
+                c[row[0] - 1] = tuple(row[2:])
+                oc[row[0] - 1] = row[1]
 
     def __getitem__(self, i):
         c = self.cache()
         got = c.get(i)
         if got is None:
             row = self.db.one(
-                "SELECT " + PARCEL_SQL + " " + PARCEL_FROM + "WHERE p.rowid = ?",
-                (i + 1,))
+                "SELECT p.owner_id, " + PARCEL_SQL + " " + PARCEL_FROM
+                + "WHERE p.rowid = ?", (i + 1,))
             if row is None:
                 raise IndexError(i)
-            got = c[i] = tuple(row)
+            got = c[i] = tuple(row[1:])
+            self.oid_cache()[i] = row[0]
+        return got
+
+    def owner_id_at(self, i):
+        """The stored owner_id for a row, from the cache the record came from."""
+        oc = self.oid_cache()
+        got = oc.get(i)
+        if got is None:
+            self[i]
+            got = oc.get(i)
         return got
 
     def __len__(self):
@@ -346,9 +373,7 @@ class Store:
         return got
 
     def owner_for_parcel(self, i):
-        rec = self.parcels[i]
-        return self.owners[owner_id(rec[P["owner_name"]],
-                                    rec[P["owner_address"]])]
+        return self.owners[self.parcels.owner_id_at(i)]
 
     def search(self, q):
         """Address substring search.

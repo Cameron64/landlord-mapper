@@ -1,7 +1,6 @@
 import urllib.parse
-from lm.coerce import F_FIN, F_MOM, F_OCC, F_OOS, norm_txt, owner_id, to_float
+from lm.coerce import F_FIN, F_MOM, F_OCC, F_OOS, norm_txt, to_float
 from lm.fmt import num
-from lm.schema import P
 from lm.store import STORE
 
 # ---------------------------------------------------------------------------
@@ -293,10 +292,7 @@ def warm_owners_for(idxs):
     parcel reads, and owner_for_parcel() then finds every one of them in the
     memo."""
     STORE.parcels.warm(idxs)
-    ids = []
-    for i in idxs:
-        rec = STORE.parcels[i]
-        ids.append(owner_id(rec[P["owner_name"]], rec[P["owner_address"]]))
+    ids = [STORE.parcels.owner_id_at(i) for i in idxs]
     STORE.owners.warm(ids)
 
 def owner_parcels_page(oid, f, limit):
