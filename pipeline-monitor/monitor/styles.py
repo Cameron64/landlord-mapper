@@ -236,16 +236,24 @@ img, svg, table { max-width: 100%; }
 
 /* -- freshness -- */
 
-/* Download action in a panel head. Quiet by default: this is an operator
-   affordance next to the data it acts on, not a call to action. */
-.pm-panel-action{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-left:auto;}
-.pm-dl{display:inline-block;padding:.3rem .7rem;border:1px solid var(--rule);
-  border-radius:2px;color:var(--ink);text-decoration:none;font-size:.8125rem;
-  background:var(--paper-2);}
-.pm-dl:hover{border-color:var(--ink-2);}
-.pm-dl:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
-.pm-dl-note{font-size:.75rem;color:var(--ink-2);}
-@media (max-width:600px){.pm-panel-action{margin-left:0;width:100%;}}
+/* Download action, on its own row beneath the file list it acts on.
+   Solid rather than outlined: an outlined box at this size read as a link.
+   Colours are the ink/paper pair, which the dark-mode block already swaps, so
+   the button stays high-contrast in both themes without a second rule. Red is
+   deliberately not used -- on this page red means something is running. */
+.pm-panel-action {
+  margin-top: 1.1rem; padding-top: 0.9rem; border-top: 1px solid var(--rule);
+}
+.pm-dl {
+  display: inline-block; padding: 0.5rem 1rem;
+  background: var(--ink); color: var(--paper);
+  border: 1px solid var(--ink); border-radius: 2px;
+  font-family: var(--sans); font-size: 0.8125rem; font-weight: 600;
+  letter-spacing: 0.02em; text-decoration: none;
+}
+.pm-dl:hover { background: var(--ink-2); border-color: var(--ink-2); }
+.pm-dl:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.pm-dl-note { margin: 0.5rem 0 0; font-size: 0.75rem; color: var(--ink-2); }
 .pm-fresh-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
 .pm-fresh-list li {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.6rem;

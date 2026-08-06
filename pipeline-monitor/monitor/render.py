@@ -559,20 +559,31 @@ def _render_freshness_panel(status):
     present = [f for f in freshness if f.get("present")]
     if present:
         total = sum(f.get("bytes") or 0 for f in present)
+        # The size is the files as they sit on disk, not the size of the
+        # download. Saying "before compression" read as an offer to skip
+        # compressing; the note now states what happens instead of naming a
+        # choice the reader does not have.
+        noun = "file" if len(present) == 1 else "files"
+        # Sits below the list rather than inside the panel head. In the head it
+        # was an outlined box wedged against its own caption, which read as a
+        # link rather than a control; on its own row under the files it acts
+        # on, it has room to look like the button it is.
         action = (
             '<div class="pm-panel-action">'
             '<a class="pm-dl" href="/download/data.zip" '
-            'title="Zipped and streamed as you download; compressed size will be smaller">'
-            'Download these %d files</a>'
-            '<span class="pm-dl-note pm-m">%s before compression</span>'
-            '</div>' % (len(present), _e(_fmt_bytes(total)))
+            'title="Zipped as it downloads, so the file you receive is '
+            'smaller than the figure shown">'
+            'Download %d %s</a>'
+            '<p class="pm-dl-note pm-m">%s of data, zipped as it '
+            'downloads</p>'
+            '</div>' % (len(present), noun, _e(_fmt_bytes(total)))
         )
     else:
         action = ''
 
     return (
-        '<section class="pm-panel"><div class="pm-panel-head"><h2>Freshness</h2>%s</div>'
-        '<ul class="pm-fresh-list">%s</ul></section>' % (action, "".join(items))
+        '<section class="pm-panel"><div class="pm-panel-head"><h2>Freshness</h2></div>'
+        '<ul class="pm-fresh-list">%s</ul>%s</section>' % ("".join(items), action)
     )
 
 

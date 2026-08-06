@@ -402,7 +402,25 @@ class DownloadButtonTests(unittest.TestCase):
         ]
         html = render.render_page(st)
         self.assertIn('href="/download/data.zip"', html)
-        self.assertIn("Download these 1 files", html)
+        self.assertIn("Download 1 file", html)
+        # Only the present file counts toward the size, and the note must not
+        # imply compression is optional.
+        self.assertIn("zipped as it downloads", html)
+        self.assertNotIn("before compression", html)
+
+    def test_button_pluralises_and_sums_only_present_files(self):
+        st = _base_status()
+        st["freshness"] = [
+            {"name": "owner_data_total.csv", "bytes": 1000,
+             "mtime": "2026-08-06T12:16:00Z", "present": True},
+            {"name": "parcel_roll_5county.csv", "bytes": 2000,
+             "mtime": "2026-08-06T12:16:00Z", "present": True},
+            {"name": "parcel_group_assign.csv", "bytes": 9999999,
+             "mtime": None, "present": False},
+        ]
+        html = render.render_page(st)
+        self.assertIn("Download 2 files", html)
+        self.assertIn("2.9 KB of data", html)
 
     def test_no_button_when_nothing_is_present(self):
         st = _base_status()
