@@ -55,6 +55,12 @@ _TEXT_FILES = {
 # `list_part_files` because their names are not fixed -- see the regex
 # above.)
 _STAT_FILES = {
+    # The pipeline's final merged output, and the largest artifact it writes.
+    # Note the plural: `owners_data_total.csv` is a different file from
+    # `owner_data_total.csv` below, which is the scrape result. Both are real
+    # and both are tracked; the near-identical names are the pipeline's, not
+    # a typo here.
+    "owners_data_total.csv": "owners_data_total.csv",
     "owner_data_total.csv": "owner_data_total.csv",
     "owner_scrape_unresolved.csv": "owner_scrape_unresolved.csv",
     "austin_parcel_data_merged.csv": "austin_parcel_data_merged.csv",

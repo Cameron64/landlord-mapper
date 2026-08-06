@@ -61,6 +61,11 @@ RUN_START_MARKER = "tar_make("
 
 # One entry per artifact shown in the FRESHNESS panel, in display order.
 FRESHNESS_FILES = (
+    # Final merged output first: it is the artifact someone handing the data
+    # on actually wants, and at ~1.3 GB it dominates the download. Sits next
+    # to `owner_data_total.csv`, which despite the near-identical name is the
+    # scrape result, not this.
+    "owners_data_total.csv",
     "owner_data_total.csv",
     "owner_scrape_unresolved.csv",
     "austin_parcel_data_merged.csv",

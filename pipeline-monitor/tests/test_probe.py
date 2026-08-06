@@ -79,6 +79,29 @@ class SecretNameTests(unittest.TestCase):
         with mock.patch.dict(probe_module._STAT_FILES, {"cpa_key.txt": "cpa_key.txt"}):
             self.assertIsNone(probe._resolve_stat_path("cpa_key.txt"))
 
+    def test_every_displayed_file_is_readable_and_downloadable(self):
+        """`FRESHNESS_FILES` drives both the panel and the download, but the
+        bytes come from `_STAT_FILES`. A name in one and not the other would
+        show a file the download silently omits -- which is how the final
+        merged output went missing from the handoff in the first place."""
+        from monitor import probe as probe_module
+        from monitor import state
+
+        missing = [n for n in state.FRESHNESS_FILES
+                   if n not in probe_module._STAT_FILES]
+        self.assertEqual(missing, [], "displayed but not fetchable: %s" % missing)
+
+    def test_final_merged_output_is_tracked(self):
+        """Guards the plural. `owners_data_total.csv` is the 1.3 GB final
+        output; `owner_data_total.csv` is the scrape result. Losing the
+        distinction drops the primary artifact without any visible error."""
+        from monitor import probe as probe_module
+        from monitor import state
+
+        for name in ("owners_data_total.csv", "owner_data_total.csv"):
+            self.assertIn(name, probe_module._STAT_FILES)
+            self.assertIn(name, state.FRESHNESS_FILES)
+
 
 class AllowlistResolutionTests(unittest.TestCase):
     def setUp(self):
