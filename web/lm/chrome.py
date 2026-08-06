@@ -214,7 +214,12 @@ def footer():
         "<li><b>Rows by status</b> &middot; %s</li>"
         "<li><b>Owners matched</b> &middot; %s (%s%% of the %s in scope)</li>"
         "<li><b>Owners with no Texas filing</b> &middot; %s (%s%% of those in scope)</li>"
-        "<li><b>Owners in scope not looked up yet</b> &middot; %s (%s%% of those in scope)</li>"
+        # Not "not looked up yet": most of this figure is not_resolved, which is a
+        # lookup we ran and the registry rejected. Calling that "not looked up"
+        # claims we never asked, which is the one thing /method insists it is not.
+        # Both components are named so the split is readable without /health.
+        "<li><b>Owners in scope with no registry answer</b> &middot; %s (%s%% of those in "
+        "scope) &middot; %s our lookup was rejected, %s never reached by a registry row</li>"
         "<li><b>Open source</b> &middot; open-austin/landlord-mapper</li>"
         "</ul>"
         "<p style=\"margin-top:1rem\"><a href=\"/method\">Where every number comes from"
@@ -233,6 +238,7 @@ def footer():
            num(states.get(NO_RECORD, 0)), pct(states.get(NO_RECORD, 0), scoped),
            num(states.get(NOT_LOOKED_UP, 0) + states.get(NOT_RESOLVED, 0)),
            pct(states.get(NOT_LOOKED_UP, 0) + states.get(NOT_RESOLVED, 0), scoped),
+           num(states.get(NOT_RESOLVED, 0)), num(states.get(NOT_LOOKED_UP, 0)),
            skinswitch())
     )
 
