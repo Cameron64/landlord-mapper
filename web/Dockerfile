@@ -32,7 +32,12 @@ WORKDIR /app
 # no wildcard: leaving it out does not fail the build, it fails the deploy step
 # with Errno 2, and /rankings then takes the 13,462-page fallback scan forever
 # with nothing logged to say which path is live.
-COPY server.py build-db.py typed.py retype.py backfill-rank-totals.py entrypoint.sh ./
+# patch-owner-states.py is here for the same reason and is run the same way: by
+# hand over `railway ssh`, against the database on the volume. It lives at the
+# root rather than in tools/ because tools/ is excluded from the build context,
+# and a repair that can only run where the volume is mounted has to be in the
+# image to be runnable at all.
+COPY server.py build-db.py typed.py retype.py backfill-rank-totals.py patch-owner-states.py entrypoint.sh ./
 RUN chmod +x entrypoint.sh
 
 # lm/ is the server. server.py was one 4,600-line module and is now a package;
