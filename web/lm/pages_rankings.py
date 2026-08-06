@@ -62,8 +62,7 @@ def page_rankings(f):
         "<header class=\"wrap masthead\">", topline("/rankings"),
         "<h1 style=\"font-size:clamp(1.7rem,6.4vw,3.2rem)\">The biggest<br />"
         "<em>landlords</em> here</h1>",
-        "<p class=\"deck\">Ranked by what they hold inside the registry lookup scope. "
-        "This is the page a campaign picks a target from, so read the denominators: a "
+        "<p class=\"deck\">Ranked by what they hold inside the registry lookup scope. A "
         "row's parcel count is its in-scope parcels, not everything it owns, and the "
         "column beside it shows the difference</p>",
         "</header>",
@@ -79,8 +78,8 @@ def page_rankings(f):
         "<p class=\"scopenote\" style=\"margin-top:0.7rem\">Those %s owners hold %s "
         "in-scope parcels worth %s on the roll between them, out of %s owners with any "
         "in-scope parcel and %s distinct owners on the whole roll. Ranking is over "
-        "in-scope parcels only: the owner-occupied half of the roll is deliberately not "
-        "in this table, because a homeowner is not a campaign target</p>"
+        "in-scope parcels only, so the owner-occupied half of the roll is not in this "
+        "table</p>"
         % (num(matched), num(tot[0]), money(tot[2]),
            num(STORE.stats.get("owners_in_scope", 0)),
            num(STORE.stats.get("owners", 0))),

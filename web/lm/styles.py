@@ -481,6 +481,20 @@ tfoot td {
 }
 .srclist b { color: var(--ink); font-weight: 700; }
 
+/* The landing page's five doors. A link and a gloss on one line, because a
+   paragraph per link was a paragraph nobody read. */
+.doorlist { list-style: none; margin: 1.2rem 0 0; padding: 0; display: grid; gap: 0.6rem; }
+.doorlist li {
+  display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: baseline;
+  font-size: 0.95em; color: var(--ink-2);
+}
+.doorlist a {
+  font-family: var(--display); font-size: 0.75rem; letter-spacing: 0.11em;
+  text-transform: uppercase; text-decoration: none; color: var(--ink);
+  border-bottom: 2px solid var(--survey); padding-bottom: 2px; white-space: nowrap;
+}
+.doorlist a:hover { border-bottom-color: var(--ink); }
+
 @media (prefers-reduced-motion: no-preference) {
   .chain .node .run { transform-origin: top; animation: drawdown 620ms ease-out both; }
   .chain > .rec { animation: liftin 460ms ease-out both; }

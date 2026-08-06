@@ -76,9 +76,8 @@ def page_owner(oid, qs=None):
            "<span class=\"k\">Units <span class=\"approx\">estimated from floor area</span></span></div>"
            "</div>" % (money(tot["value"]), num(tot["count"]), num(tot["sqft"]),
                        num(tot["units"])),
-           "<p class=\"tblnote\">The unit figure is the only estimate in that row. It is "
-           "floor area divided by 900 square feet, so it is the third figure restated, not a "
-           "fourth fact</p>",
+           "<p class=\"tblnote\">The unit figure is the only estimate in that row: floor area "
+           "divided by 900 square feet, so it is the third figure restated</p>",
            owner_profile_band(o, tot),
            owner_filing_band(oid, state, fl, o),
            "<h3 class=\"subhead\">Every property on the rolls under this owner</h3>",
@@ -241,11 +240,9 @@ def owner_filing_band(oid, state, fl, o):
         "background:var(--paper-2);padding:clamp(0.9rem,3vw,1.3rem)\">"
         "<div class=\"%s\"><span class=\"who\">%s</span><p style=\"margin:0;"
         "max-width:38rem\">%s</p></div>"
-        "<p class=\"tell tell--quiet\">The three states a lookup can end in are different "
-        "claims. <b>Matched</b> means a filing lines up. <b>No record</b> means the "
-        "registry searched and found nothing filed. <b>Lookup rejected</b> means our query "
-        "failed and we know nothing. This owner is in the %s state. "
-        "<a href=\"/method\">The method page</a> gives the current count for each</p>"
+        "<p class=\"tell tell--quiet\">This owner is in the %s state. The three states are "
+        "different claims, and <a href=\"/method\">the method page</a> gives the current "
+        "count for each</p>"
         "<p class=\"srcstamp\">Source: Texas Comptroller franchise tax registry &middot; "
         "%s registry rows carry this owner</p></div>"
         % (cls, e(head), copy, e(STATE_LABEL[state].lower()),

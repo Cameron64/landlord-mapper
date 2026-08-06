@@ -198,31 +198,18 @@ def footer():
         "<footer class=\"band foot\" aria-labelledby=\"foot-h\"><div class=\"wrap footgrid\">"
         "<div>"
         "<h3 id=\"foot-h\">Why there are two dates</h3>"
-        "<p>The appraisal roll is published once a year, so ownership shown here is as of "
-        "the roll and can lag a sale by months. The business registry read has finished, and "
-        "it worked through owners one at a time. Officers change between those two dates, "
-        "which is why each record on a chain carries its own stamp instead of one date for "
-        "the whole page</p>"
-        "<p>Two things this data does not have: mailing addresses for tax agents, which the "
-        "counties do not publish in the roll, and reliable dates on deed transfers. Nothing "
-        "here is built on either one. Unit counts are estimated from floor area, so they are "
-        "marked as estimates everywhere they appear</p>"
-        "<p>Some registry answers cannot be placed on these rolls, and those are held back "
-        "rather than guessed at: %s rows name a parcel ID no roll loaded here carries, and %s "
-        "more carry an ID whose candidate parcels all sit at a different address. %s IDs here "
-        "are held by more than one county roll, which is why an answer only ever lands on the "
-        "candidate whose address agrees. All three counts are on the load report</p>"
-        "<p>Officer home addresses are in the source records and are deliberately not shown, "
-        "and there is no search by person name. This tool answers who owns a building, not "
-        "what a named human owns</p>"
+        "<p>The appraisal roll is published once a year, so ownership here can lag a sale by "
+        "months, and the registry read worked through owners one at a time. That is why every "
+        "record on a chain carries its own stamp</p>"
+        "<p>Unit counts are estimated from floor area. Officer home addresses are never shown "
+        "and there is no search by person name. Every other limit we know about is named on "
+        "the <a href=\"/method\">method page</a>, and the rows this process refused to join "
+        "are on the <a href=\"/health\">load report</a></p>"
         "</div><div>"
         "<h3>What is loaded right now</h3>"
         "<ul class=\"srclist\">"
         "<li><b>Appraisal rolls</b> &middot; %s parcels &middot; %s</li>"
-        "<li><b>In the lookup scope</b> &middot; %s parcels, %s owners &middot; the rest of "
-        "the roll was never queued</li>"
-        "<li><b>Distinct owners on the whole roll</b> &middot; %s &middot; keyed on name plus "
-        "mailing address</li>"
+        "<li><b>In the lookup scope</b> &middot; %s parcels, %s owners</li>"
         "<li><b>Registry rows joined</b> &middot; %s of %s read, across %s parcels</li>"
         "<li><b>Rows by status</b> &middot; %s</li>"
         "<li><b>Owners matched</b> &middot; %s (%s%% of the %s in scope)</li>"
@@ -236,12 +223,8 @@ def footer():
         # would be eaten by the % formatting below. It goes through as an arg.
         "%s"
         "</div></div></footer>"
-        % (num(st.get("scrape_rows_no_parcel", 0)),
-           num(st.get("scrape_rows_addr_clash", 0)),
-           num(st.get("parcel_pids_shared", 0)),
-           num(st.get("parcel_rows", 0)), e(counties),
+        % (num(st.get("parcel_rows", 0)), e(counties),
            num(st.get("parcels_in_scope", 0)), num(st.get("owners_in_scope", 0)),
-           num(st.get("owners", 0)),
            num(st.get("scrape_rows_joined", 0)), num(st.get("scrape_rows", 0)),
            num(st.get("scrape_parcels", 0)),
            status_bits,
@@ -324,4 +307,45 @@ def legend_band():
            num(unknown),
            num(st.get("parcels_in_scope", 0)), num(st.get("parcel_rows", 0)),
            pct(unknown, scoped), num(st.get("owners_in_scope", 0)))
+    )
+
+def legend_strip():
+    """The same legend as legend_band, one line per ending, for the landing page.
+
+    The full explanation lives on /method, which this links to. Two claims have
+    to survive the compression or the legend starts lying: no_record is a
+    finding rather than a miss, and no answer is unknown rather than
+    unregistered."""
+    st = STORE.stats
+    states = st.get("owner_states", {})
+    scoped = scope_den()
+    unknown = states.get(NOT_LOOKED_UP, 0) + states.get(NOT_RESOLVED, 0)
+    return (
+        "<section class=\"band legendband\" aria-labelledby=\"legend-h\"><div class=\"wrap\">"
+        "<h2 class=\"eyebrow\" id=\"legend-h\">How a chain ends</h2>"
+        "<div class=\"endings\">"
+        "<div class=\"ending\"><div class=\"glyph g--matched\" aria-hidden=\"true\">"
+        "<span class=\"g-mark\"></span><span class=\"g-run\"></span><span class=\"g-term\"></span></div>"
+        "<div class=\"body\"><h3>Matched</h3>"
+        "<p>The roll name lines up with a Texas filing</p>"
+        "<p class=\"ex\">%s owners &middot; %s%%</p></div></div>"
+        "<div class=\"ending\"><div class=\"glyph g--norec\" aria-hidden=\"true\">"
+        "<span class=\"g-mark\"></span><span class=\"g-run\"></span><span class=\"g-term\"></span></div>"
+        "<div class=\"body\"><h3>No record</h3>"
+        "<p>Texas has no filing under this name. A finding, not a miss</p>"
+        "<p class=\"ex\">%s owners &middot; %s%%</p></div></div>"
+        "<div class=\"ending\"><div class=\"glyph g--unknown\" aria-hidden=\"true\">"
+        "<span class=\"g-mark\"></span><span class=\"g-run\"></span><span class=\"g-term\"></span></div>"
+        "<div class=\"body\"><h3>No answer</h3>"
+        "<p>Our lookup failed. Unknown, never unregistered</p>"
+        "<p class=\"ex\">%s owners &middot; %s%%</p></div></div>"
+        "</div>"
+        "<p class=\"tblnote\" style=\"margin-top:1.4rem\">Shares are of the %s owners in "
+        "scope. A parcel outside the coverage rules ends the same dashed way and names the "
+        "rule &middot; <a href=\"/method\">where every number comes from</a></p>"
+        "</div></section>"
+        % (num(states.get(MATCHED, 0)), pct(states.get(MATCHED, 0), scoped),
+           num(states.get(NO_RECORD, 0)), pct(states.get(NO_RECORD, 0), scoped),
+           num(unknown), pct(unknown, scoped),
+           num(st.get("owners_in_scope", 0)))
     )
