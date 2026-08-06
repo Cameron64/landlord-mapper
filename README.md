@@ -12,6 +12,25 @@ WIP front end visualizing collated data is here: https://ontheseams.shinyapps.io
 
 Request access to the following GDrive for further project materials: https://drive.google.com/drive/folders/1e2Ahq9sNNQ2K_Q-RuTrdkWzDL6FH_gAa?usp=sharing
 
+## Fork status and licensing
+
+This is a fork of [open-austin/landlord-mapper](https://github.com/open-austin/landlord-mapper),
+branched at upstream commit
+[`95f5522`](https://github.com/open-austin/landlord-mapper/commit/95f5522048ff9efbfd85cade93a8b27118b9ae4a)
+(2026-08-04), plus local work adding the `web/` front end, `pipeline-monitor/`,
+the reproducibility setup, and the scope-rule corrections documented below.
+
+**Upstream carries no `LICENSE` file, so its code is all rights reserved by
+default, and no license is granted for the contents of this fork.** I have asked
+upstream to adopt one. Until that is resolved, treat this repository as readable
+but not reusable. When upstream adopts a license this fork will adopt the same
+license, retain the upstream copyright notice, and record the modifications here.
+
+Data is a separate question from code. The published figures and the SQLite build
+are derived from county appraisal rolls and the Texas Comptroller registry, whose
+own terms of use govern redistribution regardless of what license covers this
+source. See **Data sources** at the end of this file for what goes into them.
+
 ## How the data flows
 
 The R pipeline is a `targets` chain. In outline:
