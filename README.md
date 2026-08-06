@@ -86,7 +86,7 @@ only). They converge only as the unanswered residue shrinks.
 | `shinyApp/app.R` | The Shiny front end, deployed at the shinyapps.io link above. |
 | `web/` | A second front end: a stdlib-only Python server over a read-only SQLite build of the pipeline's output, deployed on Railway. Added because it holds the whole dataset on a small box and answers a page in well under a second; see `web/README.md`. It does not replace `shinyApp/`, and neither one reads the other's code. |
 | `pipeline-monitor/` | A read-only local page, API, and MCP server showing what the pipeline is doing right now: current target, elapsed and estimated time, whether the scrape is mid-flight. Reads the `targets` metadata and the container log; never writes. See `pipeline-monitor/README.md`. |
-| `renv.lock`, `Dockerfile` | Reproducibility for the R pipeline. |
+| `renv.lock`, `renv/`, `requirements.txt`, `Dockerfile` | Reproducibility for the R pipeline. `renv.lock` plus the `renv/` bootstrap pin the R library; `requirements.txt` pins the three Python packages `TCAD_parse.py` needs (pandas, numpy, ijson). |
 | `Appraisal Export Layout - 8.0.30.xlsx`, `pac_cols.txt` | Column layouts for the appraisal-roll exports. |
 | `HHI Data 2024 United States.xlsx` | Household-income reference data. |
 
@@ -105,15 +105,16 @@ something inert if you only want to look inside the image.
 
 Two things to know before building:
 
-- **`docker build .` does not work from a fresh clone.** The `Dockerfile` copies
-  `renv/activate.R`, `renv/settings.json`, `requirements.txt`, `AUSTIN*.zip`, and
-  `*.json`. None of those are in the repo, and the first three are not
-  gitignored either, so they are simply absent and the build fails at the first
-  `COPY`. You need at least the renv bootstrap files and a Python requirements
-  file alongside the source before the image will build. The roll archive is the
-  softer case: the `tcad_data_get` target downloads the Travis roll itself, so
-  the `COPY AUSTIN*.zip` line is there to bake in a copy already on hand rather
-  than because the pipeline cannot fetch one.
+- **`docker build .` still needs two things the repo does not carry.** The renv
+  bootstrap (`renv/activate.R`, `renv/settings.json`) and `requirements.txt` are
+  in git, so every `COPY` up to line 36 resolves from a clean clone. Two later
+  ones do not. `COPY AUSTIN*.zip .` wants the 2.5 GB Travis roll archive, which
+  is deliberately not in git; the pipeline's `tcad_data_get` target downloads
+  that roll itself, so the archive is a build-time convenience rather than
+  something the pipeline cannot live without. `COPY *.json .` matches no file at
+  the repo root at all, and the working image contains no root-level `.json`
+  either, so that line appears to be vestigial. Supply a roll archive and drop
+  or satisfy the `*.json` line before the image will build end to end.
 - **The scrape is the long pole and it resumes.** A rerun after a scope or code
   change re-asks only about parcels missing from `owner_data_total.csv`. Confirm
   that from the log line the scrape prints before it starts working:
