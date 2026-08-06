@@ -186,13 +186,13 @@ def page_parcel(i):
             SCOPE_NOSIZE: "the roll carries no living area for it, so there is no size "
                           "to measure it by",
         }.get(scope_reason(rec),
-              "the roll neither flags it investor-held nor puts it over 5 units")
+              "the roll neither flags it investor-held nor puts it at 5 units or more")
         out.append("<h3>Outside the coverage rules</h3>")
         out.append(
             "<p class=\"tell\">The registry was never asked about this one, because %s. That is "
             "a rule about what this tool covers, not a lookup still to come, and not a finding "
             "either. The rules take parcels the owner does not live in that the roll flags as "
-            "investor-held, plus any building over 5 units, which is %s of the %s parcels on "
+            "investor-held, plus any building of 5 units or more, which is %s of the %s parcels on "
             "the rolls</p>" % (why, num(st.get("parcels_in_scope", 0)),
                               num(st.get("parcel_rows", 0))))
         if o.get("in_scope"):

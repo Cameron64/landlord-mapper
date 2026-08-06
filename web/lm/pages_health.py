@@ -50,7 +50,7 @@ def page_health():
                                     pct(st.get("parcels_out_of_scope", 0),
                                         max(1, st.get("parcel_rows", 1))))),
         ("Scope predicate",
-         "((is_financialized AND NOT is_owner_occupied) OR property_units > 5) "
+         "((is_financialized AND NOT is_owner_occupied) OR property_units > 4) "
          "AND property_units != 0"),
         ("Owners in the lookup scope",
          "%s (%s%% of owners on the roll)" % (num(st.get("owners_in_scope", 0)),
@@ -122,7 +122,7 @@ def page_health():
     body += [
         "<p class=\"scopenote\">Coverage note: the registry scrape is scoped to rentals, "
         "meaning parcels the owner does not live in that the roll flags as investor-held, plus "
-        "any building over 5 units. That is %s of the %s parcels here and %s of the %s owners, "
+        "any building of 5 units or more. That is %s of the %s parcels here and %s of the %s owners, "
         "and it is a decision taken in the pipeline, not a shortfall. Coverage is therefore "
         "quoted against the %s owners in scope: %s looked up, %s%%. The %s owners outside the "
         "scope are reported as outside it, never as a lookup pending. Neither case means there "

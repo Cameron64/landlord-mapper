@@ -235,7 +235,7 @@ def parcel_in_scope(rec):
     units = to_float(rec[P["property_units"]])
     if units is None or units == 0:
         return False
-    if units > 5:
+    if units > 4:
         return True
     return (is_true(rec[P["is_financialized"]])
             and is_false(rec[P["is_owner_occupied"]]))

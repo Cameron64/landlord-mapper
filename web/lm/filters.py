@@ -13,7 +13,7 @@ from lm.store import STORE
 #
 # Two populations exist and they are never mixed silently. "In scope" is the
 # lookup scope predicate, reproduced in parcel_in_scope():
-#     ((is_financialized AND NOT is_owner_occupied) OR property_units > 5)
+#     ((is_financialized AND NOT is_owner_occupied) OR property_units > 4)
 #     AND property_units != 0
 # Everything else is "the whole roll". Every count on these pages names which
 # one it is counted against.

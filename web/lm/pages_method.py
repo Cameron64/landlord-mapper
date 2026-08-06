@@ -60,14 +60,12 @@ def page_method():
         "</div>",
         "<p class=\"stamp\" style=\"font-family:var(--mono)\">"
         "((is_financialized = TRUE AND is_owner_occupied = FALSE) "
-        "OR property_units &gt; 5) AND property_units != 0</p>",
+        "OR property_units &gt; 4) AND property_units != 0</p>",
         "<div class=\"prose\" style=\"margin-top:1.4rem\">",
         "<p>In plain words: a parcel the owner does not live in that the roll flags as "
-        "investor-held, or any building the roll sizes at more than five units. Strictly "
-        "more than five, so a clean five-unit building is outside unless it is also flagged "
-        "investor-held. A parcel with no floor area on the roll is outside too, because "
-        "there is no size to judge it by, and that is not the same claim as the building "
-        "being small</p>",
+        "investor-held, or any building the roll sizes at five units or more. A parcel with "
+        "no floor area on the roll is outside, because there is no size to judge it by, and "
+        "that is not the same claim as the building being small</p>",
         "<p>That predicate selects <b>%s</b> of the <b>%s</b> parcels on the rolls, which "
         "is %s%% of them, and <b>%s</b> of the <b>%s</b> distinct owners. An owner counts as "
         "in scope when any one of its parcels is</p>"

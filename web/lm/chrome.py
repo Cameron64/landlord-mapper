@@ -143,7 +143,7 @@ def scope_note():
     st = STORE.stats
     return (
         "<p class=\"scopenote\">The registry lookup covers rentals: parcels the owner does "
-        "not live in that the roll flags as investor-held, and any building over 5 units. "
+        "not live in that the roll flags as investor-held, and any building of 5 units or more. "
         "That is %s of the %s parcels on the rolls, and the other %s were never going to be "
         "looked up. A parcel outside those rules says so on its own page, which is not the "
         "same as nobody owning it</p>"
