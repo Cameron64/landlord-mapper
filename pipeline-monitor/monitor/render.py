@@ -256,17 +256,20 @@ def _render_headline(status):
         started_dt = _parse_iso(started_at)
         if started_dt is not None and elapsed_seconds is not None:
             finished_clock = _clock_html_dt(started_dt + timedelta(seconds=elapsed_seconds))
+        # headline_html carries markup (the <time> element), so it is assembled
+        # from already-safe pieces and passed through unescaped. Escaping it
+        # wholesale would print the tag at the reader instead of the time.
         if elapsed_seconds is not None:
-            headline_text = "Finished %s, took %s" % (
+            headline_html = "Finished %s, took %s" % (
                 finished_clock or "an unknown time",
-                bars.format_duration_short(elapsed_seconds),
+                _e(bars.format_duration_short(elapsed_seconds)),
             )
         else:
-            headline_text = "No run recorded yet."
+            headline_html = _e("No run recorded yet.")
         return (
             '<section class="pm-headline"><p class="%s">%s</p>'
             '<p class="pm-target" aria-live="polite">%s</p></section>'
-            % (cls, _e(label), _e(headline_text))
+            % (cls, _e(label), headline_html)
         )
 
     docket = status.get("docket") or []
@@ -551,9 +554,25 @@ def _render_freshness_panel(status):
             % (_e(name), _e(size), clock)
         )
 
+    # The download carries exactly the files listed above that are present, so
+    # the panel doubles as the manifest -- there is no second, invisible set.
+    present = [f for f in freshness if f.get("present")]
+    if present:
+        total = sum(f.get("bytes") or 0 for f in present)
+        action = (
+            '<div class="pm-panel-action">'
+            '<a class="pm-dl" href="/download/data.zip" '
+            'title="Zipped and streamed as you download; compressed size will be smaller">'
+            'Download these %d files</a>'
+            '<span class="pm-dl-note pm-m">%s before compression</span>'
+            '</div>' % (len(present), _e(_fmt_bytes(total)))
+        )
+    else:
+        action = ''
+
     return (
-        '<section class="pm-panel"><div class="pm-panel-head"><h2>Freshness</h2></div>'
-        '<ul class="pm-fresh-list">%s</ul></section>' % "".join(items)
+        '<section class="pm-panel"><div class="pm-panel-head"><h2>Freshness</h2>%s</div>'
+        '<ul class="pm-fresh-list">%s</ul></section>' % (action, "".join(items))
     )
 
 

@@ -18,6 +18,8 @@ import os
 import socketserver
 import sys
 import urllib.parse
+import zipfile
+from datetime import datetime, timezone
 
 from monitor.probe import Probe
 from monitor.render import render_page
@@ -86,6 +88,9 @@ class Handler(http.server.BaseHTTPRequestHandler):
         if path == "/healthz":
             return self._send_json(self._healthz())
 
+        if path in ("/download/data.zip", "/download"):
+            return self._send_data_zip()
+
         if path == "/favicon.ico":
             self.send_response(204)
             self.send_header("Content-Length", "0")
@@ -116,6 +121,59 @@ class Handler(http.server.BaseHTTPRequestHandler):
             "lines": lines,
         }
 
+    def _send_data_zip(self):
+        """Stream the pipeline's data products as a zip.
+
+        The member list is exactly the artifacts the Freshness panel reports as
+        present -- same logical names, same allowlist, same secret guard in
+        `Probe`. There is no way to ask for a file outside that set, so the
+        credential file sitting in the same directory is unreachable here as
+        well.
+
+        Streamed and deflated on the fly: the payload is hundreds of megabytes
+        of CSV and neither the zip nor any member is ever held in memory. The
+        response therefore cannot carry a Content-Length, so it closes the
+        connection to mark the end of the body.
+        """
+        status = self.sampler.status() or {}
+        present = [f for f in (status.get("freshness") or []) if f.get("present")]
+        if not present:
+            return self._send_json(
+                {"error": "no data files are present to download"}, 404)
+
+        stamp = datetime.now(timezone.utc).strftime("%Y%m%d-%H%M%SZ")
+        self.send_response(200)
+        self.send_header("Content-Type", "application/zip")
+        self.send_header(
+            "Content-Disposition",
+            'attachment; filename="landlord-mapper-data-%s.zip"' % stamp)
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("Connection", "close")
+        self.end_headers()
+        if self.command == "HEAD":
+            return None
+
+        try:
+            with zipfile.ZipFile(_NonSeekableWriter(self.wfile), "w",
+                                 zipfile.ZIP_DEFLATED, allowZip64=True) as zf:
+                for entry in present:
+                    name = entry.get("name")
+                    if not name:
+                        continue
+                    info = zipfile.ZipInfo(name)
+                    info.compress_type = zipfile.ZIP_DEFLATED
+                    with zf.open(info, "w") as member:
+                        for chunk in self.sampler.probe.iter_bytes(name):
+                            member.write(chunk)
+                zf.writestr(
+                    "MANIFEST.txt",
+                    _manifest_text(status, present, stamp))
+        except (BrokenPipeError, ConnectionResetError):
+            # The reader went away mid-download. Nothing to recover, and it is
+            # not a server fault worth a traceback.
+            pass
+        return None
+
     def _healthz(self):
         # Deliberately about the MONITOR, not the pipeline. Returns 200 even
         # when the box is unreachable: a monitor that reports unhealthy because
@@ -126,6 +184,46 @@ class Handler(http.server.BaseHTTPRequestHandler):
             "sampler_age_seconds": self.sampler.age_seconds(),
             "source_reachable": self.sampler.source_reachable(),
         }
+
+
+class _NonSeekableWriter:
+    """Minimal sink so zipfile streams instead of seeking.
+
+    zipfile only reaches for seek/tell when the underlying object offers them.
+    Withholding both is what makes it emit data descriptors and write straight
+    through to the socket.
+    """
+
+    def __init__(self, raw):
+        self._raw = raw
+
+    def write(self, data):
+        self._raw.write(data)
+        return len(data)
+
+    def flush(self):
+        self._raw.flush()
+
+
+def _manifest_text(status, present, stamp):
+    """A plain-text note travelling with the data, so a copy on someone's disk
+    can still say where it came from and how old it is."""
+    run = status.get("run") or {}
+    lines = [
+        "landlord-mapper pipeline data",
+        "packaged at        %s" % stamp,
+        "monitor sampled at %s" % status.get("generated_at"),
+        "run state          %s" % run.get("state"),
+        "run started        %s" % run.get("started_at"),
+        "",
+        "These are snapshots of files on the pipeline volume, copied as they",
+        "were at the moment above. They are not regenerated for this download.",
+        "",
+        "file, bytes, last modified (UTC)",
+    ]
+    for f in present:
+        lines.append("%s, %s, %s" % (f.get("name"), f.get("bytes"), f.get("mtime")))
+    return "\n".join(lines) + "\n"
 
 
 class Server(socketserver.ThreadingMixIn, socketserver.TCPServer):

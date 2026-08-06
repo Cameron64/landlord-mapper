@@ -235,6 +235,17 @@ img, svg, table { max-width: 100%; }
 .pm-scrape-note { margin: 0.7rem 0 0; font-size: 0.9em; color: var(--ink-2); }
 
 /* -- freshness -- */
+
+/* Download action in a panel head. Quiet by default: this is an operator
+   affordance next to the data it acts on, not a call to action. */
+.pm-panel-action{display:flex;align-items:baseline;gap:.6rem;flex-wrap:wrap;margin-left:auto;}
+.pm-dl{display:inline-block;padding:.3rem .7rem;border:1px solid var(--rule);
+  border-radius:2px;color:var(--ink);text-decoration:none;font-size:.8125rem;
+  background:var(--paper-2);}
+.pm-dl:hover{border-color:var(--ink-2);}
+.pm-dl:focus-visible{outline:2px solid var(--focus);outline-offset:2px;}
+.pm-dl-note{font-size:.75rem;color:var(--ink-2);}
+@media (max-width:600px){.pm-panel-action{margin-left:0;width:100%;}}
 .pm-fresh-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
 .pm-fresh-list li {
   display: flex; flex-wrap: wrap; justify-content: space-between; gap: 0.6rem;

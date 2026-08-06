@@ -129,6 +129,52 @@ class Probe:
                 out.append((name, size[0]))
         return out
 
+    def iter_bytes(self, name: str, chunk_size: int = 1 << 20):
+        """Yield an allowlisted data file's bytes, a chunk at a time.
+
+        Goes through the same `_STAT_FILES` table and the same secret guard as
+        `stat`, so the download surface can never reach a file the monitor
+        would not already report on -- `cpa_key.txt` sits in this directory and
+        is not reachable through either. Yields nothing if the file cannot be
+        read, so a caller can always iterate without a null check.
+
+        Chunked rather than slurped: these are CSVs in the tens to hundreds of
+        megabytes and the monitor should not hold one in memory to serve it.
+        """
+        path = self._resolve_stat_path(name)
+        if path is None:
+            return
+        try:
+            with open(path, "rb") as fh:
+                while True:
+                    chunk = fh.read(chunk_size)
+                    if not chunk:
+                        return
+                    yield chunk
+        except OSError:
+            pass
+        # Fallback for the root-owned volume when no ACL grant is in place.
+        # Fixed argv, never a shell, same as every other read here.
+        try:
+            proc = subprocess.Popen(
+                ["sudo", "-n", "cat", path],
+                stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+            )
+        except OSError:
+            return
+        try:
+            while True:
+                chunk = proc.stdout.read(chunk_size)
+                if not chunk:
+                    return
+                yield chunk
+        finally:
+            try:
+                proc.stdout.close()
+            except OSError:
+                pass
+            proc.wait(timeout=SUBPROCESS_TIMEOUT)
+
     def stat(self, name: str) -> tuple[int, datetime] | None:
         """`(bytes, mtime_utc)` for one of the fixed freshness files."""
         path = self._resolve_stat_path(name)

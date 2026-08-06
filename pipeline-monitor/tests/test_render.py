@@ -358,3 +358,63 @@ class PercentFormatTrapTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class TimeMarkupTests(unittest.TestCase):
+    """A <time> element must reach the browser as markup, never as visible text.
+
+    Regression guard: the idle headline once had its clock escaped wholesale,
+    so the page literally read `Finished <time data-utc="...">15:04:10Z</time>`.
+    Any state that renders a clock is checked, not just the one that broke.
+    """
+
+    def _states(self):
+        out = {}
+        for name in ("running", "idle", "failed", "unknown"):
+            st = _base_status()
+            st["run"]["state"] = name
+            out[name] = st
+        return out
+
+    def test_no_escaped_time_tag_in_any_state(self):
+        for name, status in self._states().items():
+            html = render.render_page(status)
+            self.assertNotIn("&lt;time", html, "%s state printed an escaped <time> tag" % name)
+            self.assertNotIn("&amp;lt;", html, "%s state double-escaped markup" % name)
+
+    def test_idle_headline_renders_a_real_time_element(self):
+        idle = self._states()["idle"]
+        html = render.render_page(idle)
+        self.assertIn("Finished <time data-utc=", html)
+        self.assertNotIn("Finished &lt;time", html)
+
+
+class DownloadButtonTests(unittest.TestCase):
+    """The download offers exactly what the Freshness panel says is present."""
+
+    def test_button_counts_only_present_files(self):
+        st = _base_status()
+        st["freshness"] = [
+            {"name": "owner_data_total.csv", "bytes": 27855434,
+             "mtime": "2026-08-06T12:16:00Z", "present": True},
+            {"name": "parcel_roll_5county.csv", "bytes": None,
+             "mtime": None, "present": False},
+        ]
+        html = render.render_page(st)
+        self.assertIn('href="/download/data.zip"', html)
+        self.assertIn("Download these 1 files", html)
+
+    def test_no_button_when_nothing_is_present(self):
+        st = _base_status()
+        st["freshness"] = [
+            {"name": "owner_data_total.csv", "bytes": None,
+             "mtime": None, "present": False},
+        ]
+        html = render.render_page(st)
+        self.assertNotIn('href="/download/data.zip"', html)
+
+    def test_no_button_when_freshness_absent(self):
+        st = _base_status()
+        st["freshness"] = []
+        html = render.render_page(st)
+        self.assertNotIn('href="/download/data.zip"', html)

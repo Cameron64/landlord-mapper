@@ -54,6 +54,12 @@ class Sampler:
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
 
+    @property
+    def probe(self) -> Probe:
+        """The underlying probe, for callers that stream a file rather than
+        read the cached status (the data download in `server.py`)."""
+        return self._probe
+
     def start(self) -> None:
         if self._thread is not None:
             return
