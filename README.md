@@ -105,16 +105,14 @@ something inert if you only want to look inside the image.
 
 Two things to know before building:
 
-- **`docker build .` still needs two things the repo does not carry.** The renv
+- **`docker build .` needs one thing the repo does not carry.** The renv
   bootstrap (`renv/activate.R`, `renv/settings.json`) and `requirements.txt` are
-  in git, so every `COPY` up to line 36 resolves from a clean clone. Two later
-  ones do not. `COPY AUSTIN*.zip .` wants the 2.5 GB Travis roll archive, which
-  is deliberately not in git; the pipeline's `tcad_data_get` target downloads
-  that roll itself, so the archive is a build-time convenience rather than
-  something the pipeline cannot live without. `COPY *.json .` matches no file at
-  the repo root at all, and the working image contains no root-level `.json`
-  either, so that line appears to be vestigial. Supply a roll archive and drop
-  or satisfy the `*.json` line before the image will build end to end.
+  in git, so every `COPY` in the `Dockerfile` resolves from a clean clone except
+  `COPY AUSTIN*.zip .`, which wants the 2.5 GB Travis roll archive. That one is
+  deliberately not in git, and the pipeline's `tcad_data_get` target downloads
+  the roll itself, so the archive is a build-time convenience rather than
+  something the pipeline cannot live without. Supply a copy, or drop that line,
+  and the image builds.
 - **The scrape is the long pole and it resumes.** A rerun after a scope or code
   change re-asks only about parcels missing from `owner_data_total.csv`. Confirm
   that from the log line the scrape prints before it starts working:

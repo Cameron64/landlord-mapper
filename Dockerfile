@@ -35,7 +35,6 @@ COPY *.xlsx          .
 COPY *.R            .
 COPY *.py            .
 COPY AUSTIN*.zip            .
-COPY *.json            .
 COPY *.txt            .
 COPY link_used.csv            .
 
