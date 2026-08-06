@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Test fixtures under tests/fixtures/ are deliberately committed — do not add
+# a blanket rule that would exclude them (e.g. *.psv, *.csv, *.txt).

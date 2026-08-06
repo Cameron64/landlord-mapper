@@ -1,0 +1,171 @@
+[entrypoint] code sync complete (0 file(s) refreshed from image)
+> targets::tar_make(callr_function = NULL)
+Registered S3 method overwritten by 'quantmod':
+  method            from
+  as.zoo.data.frame zoo 
+Loading required package: foreach
+Loading required package: future
+Loading required package: rngtools
+
+Attaching package: ‘dplyr’
+
+The following objects are masked from ‘package:stats’:
+
+    filter, lag
+
+The following objects are masked from ‘package:base’:
+
+    intersect, setdiff, setequal, union
+
+
+Attaching package: ‘selenider’
+
+The following objects are masked from ‘package:rvest’:
+
+    back, forward
+
+The following object is masked from ‘package:tibble’:
+
+    has_name
+
+
+Attaching package: ‘selenium’
+
+The following object is masked from ‘package:selenider’:
+
+    keys
+
+
+Attaching package: ‘purrr’
+
+The following objects are masked from ‘package:foreach’:
+
+    accumulate, when
+
+
+Attaching package: ‘data.table’
+
+The following object is masked from ‘package:purrr’:
+
+    transpose
+
+The following objects are masked from ‘package:dplyr’:
+
+    between, first, last
+
+
+Attaching package: ‘readr’
+
+The following object is masked from ‘package:rvest’:
+
+    guess_encoding
+
+
+Attaching package: ‘lubridate’
+
+The following objects are masked from ‘package:data.table’:
+
+    hour, isoweek, mday, minute, month, quarter, second, wday, week,
+    yday, year
+
+The following objects are masked from ‘package:base’:
+
+    date, intersect, setdiff, union
+
+qs2 0.1.6
+
+Attaching package: ‘tidyr’
+
+The following object is masked from ‘package:stringdist’:
+
+    extract
+
+Loading required package: Rcpp
+Loading required package: zigg
+Loading required package: RcppParallel
+
+Attaching package: ‘RcppParallel’
+
+The following object is masked from ‘package:Rcpp’:
+
+    LdFlags
+
+
+Rfast: 2.1.5.2
+ ___ __ __ __ __    __ __ __ __ __ _             _               __ __ __ __ __     __ __ __ __ __ __   
+|  __ __ __ __  |  |  __ __ __ __ _/            / \             |  __ __ __ __ /   /__ __ _   _ __ __\  
+| |           | |  | |                         / _ \            | |                        / /          
+| |           | |  | |                        / / \ \           | |                       / /          
+| |           | |  | |                       / /   \ \          | |                      / /          
+| |__ __ __ __| |  | |__ __ __ __           / /     \ \         | |__ __ __ __ _        / /__/\          
+|    __ __ __ __|  |  __ __ __ __|         / /__ _ __\ \        |_ __ __ __ _   |      / ___  /           
+|   \              | |                    / _ _ _ _ _ _ \                     | |      \/  / /       
+| |\ \             | |                   / /           \ \                    | |         / /          
+| | \ \            | |                  / /             \ \                   | |        / /          
+| |  \ \           | |                 / /               \ \                  | |       / /          
+| |   \ \__ __ _   | |                / /                 \ \     _ __ __ __ _| |      / /          
+|_|    \__ __ __\  |_|               /_/                   \_\   /_ __ __ __ ___|      \/             team
+
+Attaching package: ‘Rfast’
+
+The following object is masked from ‘package:data.table’:
+
+    transpose
+
+The following objects are masked from ‘package:purrr’:
+
+    is_integer, transpose
+
+The following object is masked from ‘package:dplyr’:
+
+    nth
+
+
+Attaching package: ‘gargle’
+
+The following objects are masked from ‘package:httr2’:
+
+    secret_has_key, secret_make_key, secret_read_rds, secret_write_rds
+
++ austin_parcel_data_merged_owner dispatched
+[1] 1597   21
+[owner_scrape] 1597 parcels -> 1561 distinct owners, 16 workers
+[owner_scrape] pass 1/3: 1561 owners to look up
+[owner_scrape] pass 1 chunk 1/1: 1561 owners to look up, 16 fresh workers (RSS 1.9 GiB before pool)
+[owner_scrape] pass 1 chunk 1/1: resolved 10, still pending 1551 (RSS 2.9 GiB after teardown)
+[owner_scrape] pass 1: resolved 10, still pending 1551
+[owner_scrape] pass 2/3: 39 owners to look up (holding 1512 no_record)
+[owner_scrape] pass 2 chunk 1/1: 39 owners to look up, 16 fresh workers (RSS 2.9 GiB before pool)
+[owner_scrape] pass 2 chunk 1/1: resolved 0, still pending 39 (RSS 2.9 GiB after teardown)
+[owner_scrape] pass 2: resolved 0, still pending 39
+[owner_scrape] pass 3/3: 39 owners to look up (holding 1512 no_record)
+[owner_scrape] pass 3 chunk 1/1: 39 owners to look up, 16 fresh workers (RSS 2.9 GiB before pool)
+[owner_scrape] pass 3 chunk 1/1: resolved 0, still pending 39 (RSS 2.9 GiB after teardown)
+[owner_scrape] pass 3: resolved 0, still pending 39
+[owner_scrape] writing 1551 unresolved owners as empty rows
+[1] "done"
+[owner_scrape] status split over 1561 owner keys after 3 pass(es): matched 10, no_record 1512, not_resolved 39
+[consolidate_owner_parts] folded 6 part file(s) -> 153538 rows
+✔ austin_parcel_data_merged_owner completed [19m 2.6s, 125.43 MB]
++ situs_owner_strings dispatched
+✔ situs_owner_strings completed [17m 56.9s, 7.84 MB]
++ situs_group_assignments dispatched
+[1] 143544
+[1] 147400
+[1] "2026-08-06 12:37:57 UTC"
+[1] "2026-08-06 12:48:05 UTC"
+  [1] 101 301 374 401 401 402 365 365 420 311 410 447 495 197 318 540 297 614
+ [19] 318 558 599 614 624 611 621 643 643 644 145 614 624 636 597 611 629 629
+ [37] 672 614 624 636 665 675 597 611 666 663 675 698 666 700 665 614 624 636
+ [55] 665 684 707 620 733 727 733 734 614 624 636 665 684 726 675 698 710 394
+ [73] 733 734 736 739 268 730 267 753 267 757 738 727 735 675 698 710 743 341
+ [91] 312 341 851 318 558 626 903 753 761 753
+  [1]  154  305  375  402  412  412  420  421  421  452  481  487  500  540  558
+ [16]  594  604  624  626  626  635  636  636  639  642  644  645  645  660  665
+ [31]  665  665  666  666  672  676  676  684  684  684  684  698  700  700  700
+ [46]  704  710  710  722  722  725  726  726  726  726  726  728  729  734  735
+ [61]  736  736  740  740  740  740  740  740  743  743  743  746  747  747  747
+ [76]  749  751  754  757  761  769  769  772  773  773  790  790  790  790  851
+ [91]  871  877  877  881  881  881  906 1012 1012 1018
+✔ situs_group_assignments completed [10m 8.4s, 5.03 MB]
++ austin_parcel_data_merged_owner_clean dispatched

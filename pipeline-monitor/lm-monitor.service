@@ -1,0 +1,31 @@
+# systemd USER service for the pipeline monitor.
+#
+# Install (as cam, on the box, one time):
+#   mkdir -p ~/.config/systemd/user
+#   cp lm-monitor.service ~/.config/systemd/user/
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now lm-monitor.service
+#
+# Requires the setfacl grant from PLAN.md §3 to already be in place, and
+# WorkingDirectory below to point at wherever pipeline-monitor/ was synced to
+# on the box (see sync-to-box.sh). Edit the path before installing.
+#
+# A dead monitor is visible to agents via the MCP's unreachable error and to a
+# human via the page's stale `generated_at` banner — restart-on-failure exists
+# to recover from transient faults, not to hide a real one.
+
+[Unit]
+Description=landlord-mapper pipeline monitor (read-only status page + API)
+After=network.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/landlord-mapper-fork/pipeline-monitor
+ExecStart=/usr/bin/python3 -m monitor.server
+Environment=LM_MONITOR_PORT=8098
+Environment=LM_MONITOR_HOST=0.0.0.0
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target
