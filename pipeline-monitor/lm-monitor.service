@@ -20,7 +20,7 @@ After=network.target
 
 [Service]
 Type=simple
-WorkingDirectory=%h/landlord-mapper-fork/pipeline-monitor
+WorkingDirectory=%h/pipeline-monitor
 ExecStart=/usr/bin/python3 -m monitor.server
 Environment=LM_MONITOR_PORT=8098
 Environment=LM_MONITOR_HOST=0.0.0.0

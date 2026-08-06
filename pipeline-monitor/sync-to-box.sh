@@ -8,7 +8,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 BOX_HOST="${LM_BOX_HOST:-cam@cam-cloudripper.local}"
-BOX_DEST="${LM_BOX_DEST:-~/landlord-mapper-fork/pipeline-monitor}"
+BOX_DEST="${LM_BOX_DEST:-~/pipeline-monitor}"
 SSH_KEY="${LM_SSH_KEY:-$HOME/.ssh/id_ed25519_cloudripper}"
 
 APPLY=0
@@ -22,7 +22,7 @@ Usage: ./sync-to-box.sh [--apply]
 
 Env overrides:
   LM_BOX_HOST   default: cam@cam-cloudripper.local
-  LM_BOX_DEST   default: ~/landlord-mapper-fork/pipeline-monitor
+  LM_BOX_DEST   default: ~/pipeline-monitor
   LM_SSH_KEY    default: ~/.ssh/id_ed25519_cloudripper
 EOF
 }

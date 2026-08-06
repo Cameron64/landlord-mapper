@@ -173,9 +173,21 @@ root action that makes the volume readable, after which the monitor runs unprivi
 
 ```sh
 V=/media/cam/ImageProcessing/docker/volumes/lm_work/_data
+
+# Traverse first -- see the note below; without this the rest is unreachable.
+sudo setfacl -m u:cam:x /media/cam
+sudo setfacl -m u:cam:x /media/cam/ImageProcessing/docker
+
 sudo setfacl -R    -m u:cam:rX "$V" "$V/_targets"   # existing files
 sudo setfacl -R -d -m u:cam:rX "$V" "$V/_targets"   # DEFAULT ACL: inherited by NEW files
 ```
+
+**The traverse grants are not optional, and omitting them fails silently.** The volume sits beneath
+root-only directories (`/media/cam` at `750 root:root`, and `.../docker` at `drwx--x---`), so
+without execute on each of them the leaf grant cannot be reached at all. `setfacl` on the leaf still
+**exits 0**, and `getfacl` on it returns "Permission denied", which reads exactly like the ACL never
+applied. Verified on the box: after adding the two traverse grants, `cam` reads
+`_targets/meta/progress` with no sudo, and a newly created root-owned file inherits `user:cam:r-x`.
 
 **The `-d` default ACL is not optional and is the whole reason this works.** An access-only ACL
 covers the files that exist at the moment it is run. `targets` recreates `_targets/meta/progress`

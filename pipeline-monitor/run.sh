@@ -54,7 +54,13 @@ check_acl() {
     return 1
   fi
 
-  # Look for a default-ACL entry granting `cam` r-x on the volume root.
+  # Check the property that matters -- can this user actually read the
+  # telemetry -- not merely that an ACL entry exists somewhere. A grant on the
+  # leaf directory is useless if a parent denies traverse, and that failure
+  # looks identical to a missing grant unless it is tested end to end.
+  if [ -r "$VOLUME_ROOT/_targets/meta/progress" ] 2>/dev/null; then
+    return 0
+  fi
   if getfacl -p "$VOLUME_ROOT" 2>/dev/null | grep -q '^default:user:cam:r-x$'; then
     return 0
   fi
@@ -68,11 +74,18 @@ owner_data_part_<pid>.csv is a brand-new root-created file mid-scrape.
 Neither inherits an access-only ACL. An access-only grant would look fine
 against files that exist right now and then fail on the next real run.
 
-Run this once as Cam (needs sudo), then re-run ./run.sh:
+Run this once (needs sudo), then re-run ./run.sh:
 
     V=${VOLUME_ROOT}
+
+    # Traverse first. The volume lives under root-only directories, and without
+    # execute on each of them the grant below is unreachable -- setfacl still
+    # exits 0, so this fails silently and looks like the ACL "did not take".
+    sudo setfacl -m u:cam:x /media/cam
+    sudo setfacl -m u:cam:x /media/cam/ImageProcessing/docker
+
     sudo setfacl -R    -m u:cam:rX "\$V" "\$V/_targets"   # existing files
-    sudo setfacl -R -d -m u:cam:rX "\$V" "\$V/_targets"   # DEFAULT ACL: inherited by NEW files
+    sudo setfacl -R -d -m u:cam:rX "\$V" "\$V/_targets"   # DEFAULT ACL: new files inherit
 
 This script will not silently escalate to sudo reads in its place.
 EOF
