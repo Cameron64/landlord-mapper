@@ -8,6 +8,9 @@ Dockerfile text eol=lf
 .dockerignore text eol=lf
 *.py text eol=lf
 *.toml text eol=lf
+# The R exporters in tools/ are run inside the pipeline image on Linux, and the
+# copy on the compute box has to be byte-identical to the tracked one.
+*.R text eol=lf
 
 # The brand assets. The two font files are binary and must never be touched by
 # eol conversion -- a single byte changed in an .otf and the face stops parsing.

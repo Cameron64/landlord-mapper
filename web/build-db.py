@@ -11,7 +11,7 @@ leaves the server reading a half-written database.
 Defaults: --data ~/landlord-mapper-ui/data, --out ~/landlord-mapper-db/lm.sqlite3
 
 THE OWNER-GROUPING JOIN. parcel_group_assign.csv is a sidecar exported out of the
-pipeline's situs_group_assignments_final target by export-group-sidecar.R. It
+pipeline's situs_group_assignments_final target by tools/export-group-sidecar.R. It
 carries one integer label per parcel that folds an entity's name variants into
 one owner: six of the top ten rows of the units ranking used to be fragments of
 the Housing Authority of the City of Austin. Read the four rules below before
@@ -108,6 +108,21 @@ while args:
 
 PARCEL_FILES = ("parcel_roll_5county.csv", "austin_parcel_data_merged.csv")
 GROUP_FILE = "parcel_group_assign.csv"
+
+# Neither of those two files is written by this repo, and neither is a pipeline
+# output you can point at directly: both are exported out of the targets store by
+# the R scripts in tools/, which is the build order this database depends on.
+#
+#   1. run the pipeline (_targets.R) so the store holds austin_parcel_data_merged
+#      and situs_group_assignments_final
+#   2. tools/export-parcel-roll.R   -> DATA/parcel_roll_5county.csv
+#      tools/export-group-sidecar.R -> DATA/parcel_group_assign.csv
+#   3. this script
+#
+# Both exporters read the store read-only at /d and write to /out, so they run in
+# the pipeline image with the work volume mounted at /d:ro and DATA mounted at
+# /out. Skipping step 2 does not fail the build: a missing parcel_group_assign.csv
+# turns the owner grouping off and says so on the load report.
 
 PARCEL_COLS = [
     "situs_year", "situs_pID", "situs_address", "situs_zip",
