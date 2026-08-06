@@ -1387,9 +1387,6 @@ situs_neighor_gen_final = function(owner_data_used,
                                 nbins = max(membership))
 
   occupied          <- which(parcels_per_comp > 0L)
-  # Largest first, ties broken by component id, so the labelling is
-  # byte-identical across reruns by construction rather than by relying on
-  # order() happening to be stable for the sort method in play.
   # NOT a stable key: labels are positions in a largest-first ordering, so any
   # change in component sizes renumbers every group after it. Deterministic for
   # a given input (ties broken by component id rather than relying on order()

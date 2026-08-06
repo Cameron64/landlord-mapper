@@ -6,9 +6,49 @@ its load semantics leg for leg, and writes an indexed database the server opens
 read-only. Builds to a temp file and renames atomically, so a rebuild never
 leaves the server reading a half-written database.
 
-  python3 build-db.py [--data DIR] [--out FILE]
+  python3 build-db.py [--data DIR] [--out FILE] [--no-group]
 
 Defaults: --data ~/landlord-mapper-ui/data, --out ~/landlord-mapper-db/lm.sqlite3
+
+THE OWNER-GROUPING JOIN. parcel_group_assign.csv is a sidecar exported out of the
+pipeline's situs_group_assignments_final target by export-group-sidecar.R. It
+carries one integer label per parcel that folds an entity's name variants into
+one owner: six of the top ten rows of the units ranking used to be fragments of
+the Housing Authority of the City of Austin. Read the four rules below before
+touching it, and read --no-group, which builds the same database with the join
+switched off so its effect can be isolated from the data's.
+
+1. group_assign IS A FUNCTION OF THE OWNER, NOT OF THE PARCEL, so the join tries
+   the owner-bearing key first: (county, norm_pid, situs_address, norm(owner_name)).
+   On (county, situs_pID) alone -- no address -- the sidecar has ten keys carrying
+   two different labels, one address and two owners, and joining on that both
+   picks a label at random and inflates the roll by 19,029 rows.
+
+   THE OWNER KEY MISSES 42,990 ROLL ROWS ON ITS OWN, so it is not the only key.
+   The grouping frame's owner_name has been through the pipeline's cleaning and
+   the roll's has not: the roll says AER LAMAR PROPERTY OWNER LLC where the
+   sidecar says AER LAMAR PROPERTY LLC, and EXEMPT TRUST FBO S MONKARASH against
+   EXEMPT TRUST S MONKARASH. 24,309 of those 42,990 carry a real label, so
+   keying on the owner alone silently drops 4% of the fold. Those rows fall back
+   to (county, norm_pid, situs_address), which is a bijection with the roll's own
+   de-duplication key -- 2,117,593 keys on both sides -- and so covers all but
+   the 41 rows the grouping frame never carried. Only 7 address keys hold two
+   different labels, every one of them a 0 against a single real group, so the
+   sidecar collapses them by preferring the real one. Trying the owner key first
+   is what keeps those 7 decided by the owner rather than by that rule.
+2. LABEL 0 IS THE "NOT GROUPED" SENTINEL and covers about 1.53 M parcels. Those
+   keep exactly today's identity, owner_key(name, address). Giving each of them
+   its own entity would be strictly worse than today for 1.5 M parcels.
+3. THE LABELS ARE NOT STABLE ACROSS PIPELINE RUNS. They are positions in a
+   largest-component-first ordering, so any change in component sizes renumbers
+   every group after it. No label reaches the database, a URL or a shareable
+   link: a group's owner_id is sha1 over the alphabetically first parcel key in
+   the component, which is derived from the membership itself and so survives a
+   renumbering.
+4. PARCEL AND UNIT TOTALS MUST NOT MOVE when the join is switched on -- it
+   changes which owner a parcel is attributed to and nothing else. Owner counts
+   and every owner-denominated share DO move, because folding name variants
+   shrinks the owner denominator. --no-group exists to prove the first half.
 
 WHY THE LOAD LOGIC IS DUPLICATED HERE rather than imported from server.py: the
 server no longer contains it. Every derived value the server used to compute at
@@ -52,6 +92,7 @@ csv.field_size_limit(10 * 1024 * 1024)
 
 DATA = os.path.expanduser("~/landlord-mapper-ui/data")
 OUT = os.path.expanduser("~/landlord-mapper-db/lm.sqlite3")
+GROUP = True
 
 args = sys.argv[1:]
 while args:
@@ -60,10 +101,13 @@ while args:
         DATA = os.path.expanduser(args.pop(0))
     elif a == "--out":
         OUT = os.path.expanduser(args.pop(0))
+    elif a == "--no-group":
+        GROUP = False
     else:
         sys.exit("unknown argument %r" % a)
 
 PARCEL_FILES = ("parcel_roll_5county.csv", "austin_parcel_data_merged.csv")
+GROUP_FILE = "parcel_group_assign.csv"
 
 PARCEL_COLS = [
     "situs_year", "situs_pID", "situs_address", "situs_zip",
@@ -114,6 +158,36 @@ def owner_key(name, addr):
 
 def owner_id(name, addr):
     return hashlib.sha1(owner_key(name, addr).encode("utf-8")).hexdigest()[:12]
+
+
+def group_key3(cty, pid, addr):
+    """The sidecar's address key: county, normalised ID, situs address.
+
+    A bijection with this build's own de-duplication key, so it covers the roll.
+    """
+    return "\x1f".join((norm_txt(cty), pid, norm_txt(addr)))
+
+
+def group_key4(k3, name):
+    """The sidecar's owner key: the address key plus the normalised owner name.
+
+    Tried first because group_assign is a function of the owner. See rule 1 in
+    the module docstring for why it cannot be the only key.
+    """
+    return k3 + "\x1f" + norm_txt(name)
+
+
+def group_owner_id(anchor_key):
+    """A group's owner_id, derived from the group's own membership.
+
+    anchor_key is the alphabetically first join key in the component, so the id
+    changes only when the membership does -- not when a rerun renumbers the
+    labels (rule 3). The \\x1e prefix keeps the group ids in a different hash
+    namespace from the ungrouped owner_id() ones, which are hashes of
+    owner_key() and carry no such prefix.
+    """
+    return hashlib.sha1(
+        ("\x1egroup\x1f" + anchor_key).encode("utf-8")).hexdigest()[:12]
 
 
 def to_int(v):
@@ -241,8 +315,9 @@ CREATE TABLE officer (
 
 CREATE TABLE meta (k TEXT PRIMARY KEY, v TEXT);
 
--- Room for the pipeline agent's LLC-shell grouping to land later. Created empty
--- on purpose: no stub rows, and nothing in the server reads it yet.
+-- The pipeline's owner grouping, one row per ungrouped owner_id a group entity
+-- absorbed. group_id is the group's own owner_id, never the pipeline's integer
+-- label (rule 3). Left empty by --no-group and by a build with no sidecar.
 CREATE TABLE owner_group (
   group_id TEXT, owner_id TEXT, role TEXT, confidence REAL, method TEXT
 );
@@ -304,7 +379,103 @@ def log(msg):
     sys.stderr.flush()
 
 
-def load_parcels(cx, st):
+def load_groups(st):
+    """Read the owner-grouping sidecar.
+
+    Returns three maps: owner key -> label, address key -> label, and
+    label -> owner_id. Label 0 is carried in both key maps on purpose: without it
+    there is no way to tell a parcel the pipeline left ungrouped from a parcel the
+    sidecar never mentioned, and only the second of those is a join failure.
+    Returns (None, None, None) when the join is off or the file is absent, which
+    is what makes the whole grouping a no-op rather than an error.
+
+    The address map keeps the real label when a key carries both a real one and a
+    0; there are 7 such keys and no key carries two different real labels.
+
+    A group's owner_id is the sha1 of its alphabetically first owner key, so it
+    is computed here, where the whole component is visible, and not per parcel.
+    """
+    if not GROUP:
+        st["group_join"] = False
+        st["group_off_reason"] = "--no-group"
+        log("owner grouping OFF (--no-group)")
+        return None, None, None
+    path = os.path.join(DATA, GROUP_FILE)
+    if not os.path.exists(path):
+        st["group_join"] = False
+        st["group_off_reason"] = "no %s in %s" % (GROUP_FILE, DATA)
+        log("owner grouping OFF (no %s)" % GROUP_FILE)
+        return None, None, None
+    log("reading %s" % path)
+    by_owner = {}
+    by_addr = {}
+    anchor = {}
+    n = 0
+    dupes = 0
+    addr_collapsed = 0
+    with open(path, newline="", encoding="utf-8", errors="replace") as f:
+        r = csv.reader(f)
+        head = next(r)
+        need = ("k_county", "k_pid", "k_addr", "k_owner", "group_assign")
+        missing = [c for c in need if c not in head]
+        if missing:
+            st["errors"].append(
+                "%s is missing %r; header was %r" % (GROUP_FILE, missing, head))
+            raise SystemExit(2)
+        ic, ip, ia, io, ig = (head.index(c) for c in need)
+        for raw in r:
+            k3 = "\x1f".join((raw[ic], raw[ip], raw[ia]))
+            k4 = k3 + "\x1f" + raw[io]
+            g = int(raw[ig] or 0)
+            if k4 in by_owner:
+                # The sidecar is written one row per owner key, so this is a
+                # contract violation rather than something to resolve quietly.
+                # Reported, and the real label wins, which is the export's rule.
+                dupes += 1
+                if g == 0:
+                    continue
+            else:
+                n += 1
+            by_owner[k4] = g
+            old = by_addr.get(k3)
+            if old is None:
+                by_addr[k3] = g
+            elif old != g:
+                addr_collapsed += 1
+                if old == 0:
+                    by_addr[k3] = g
+                elif g != 0:
+                    raise SystemExit(
+                        "load_groups: address key %r carries two different real "
+                        "labels (%d and %d); preferring either would be a guess "
+                        "and the owner key is the only thing that can decide it"
+                        % (k3, old, g))
+            if g and (g not in anchor or k4 < anchor[g]):
+                anchor[g] = k4
+    gid = {g: group_owner_id(k) for g, k in anchor.items()}
+    if len(set(gid.values())) != len(gid):
+        raise SystemExit(
+            "load_groups: two groups hashed to the same owner_id; the anchor "
+            "keys are not distinct and the fold would merge unrelated entities")
+    st["group_join"] = True
+    st["group_file"] = GROUP_FILE
+    st["group_mtime"] = mtime(path)
+    st["group_sidecar_rows"] = n
+    st["group_sidecar_addr_keys"] = len(by_addr)
+    st["group_sidecar_dupe_keys"] = dupes
+    # Rows, not keys: a key holding 0, real, 0 collapses twice.
+    st["group_sidecar_addr_collapses"] = addr_collapsed
+    st["group_labels"] = len(gid)
+    st["group_sidecar_grouped"] = sum(1 for g in by_owner.values() if g)
+    log("%s sidecar rows on %s address keys, %s labels, %s grouped keys, "
+        "%s duplicate owner keys, %s rows collapsed onto an address key"
+        % (format(n, ",d"), format(len(by_addr), ",d"), format(len(gid), ",d"),
+           format(st["group_sidecar_grouped"], ",d"), format(dupes, ",d"),
+           format(addr_collapsed, ",d")))
+    return by_owner, by_addr, gid
+
+
+def load_parcels(cx, st, by_owner=None, by_addr=None, gid=None):
     path = parcel_path()
     log("reading %s" % path)
     dupes = 0
@@ -315,6 +486,13 @@ def load_parcels(cx, st):
     n_scope = 0
     n = 0
     zips = {}
+    n_grouped = 0         # rows the sidecar gave a real (non-zero) label
+    n_ungrouped = 0       # rows the sidecar labelled 0, which keep today's id
+    n_nogroup_row = 0     # rows the sidecar does not mention at all: a join miss
+    n_by_owner = 0        # rows matched on the owner key
+    n_by_addr = 0         # rows matched on the address key after an owner miss
+    n_addr_real = 0       # of those, the ones that recovered a real label
+    fold = set()          # (group owner_id, the ungrouped owner_id it absorbed)
     seen_key = set()      # (pid_norm, county, situs_address) - the de-dupe rule
     batch = []
     ncols = len(cx.execute("SELECT * FROM parcel LIMIT 0").description)
@@ -354,6 +532,32 @@ def load_parcels(cx, st):
             y = rec[P["year_built"]]
             yb = int(y) if len(y) == 4 and y.isdigit() else 0
             oid = owner_id(rec[P["owner_name"]], rec[P["owner_address"]])
+            if by_owner is not None:
+                # The fold: a grouped parcel is attributed to the group's entity
+                # instead of to this one spelling of the owner's name. Ungrouped
+                # parcels (label 0) and any parcel the sidecar does not mention
+                # keep oid exactly as computed above, which is today's behaviour.
+                k3 = group_key3(cty, pid, addr)
+                g = by_owner.get(group_key4(k3, rec[P["owner_name"]]))
+                if g is None:
+                    # The roll's owner_name did not survive the pipeline's
+                    # cleaning; the address key decides. Rule 1 in the docstring.
+                    g = by_addr.get(k3)
+                    if g is not None:
+                        n_by_addr += 1
+                        if g:
+                            n_addr_real += 1
+                else:
+                    n_by_owner += 1
+                if g is None:
+                    n_nogroup_row += 1
+                elif g == 0:
+                    n_ungrouped += 1
+                else:
+                    n_grouped += 1
+                    ggid = gid[g]
+                    fold.add((ggid, oid))
+                    oid = ggid
             ztrim = rec[P["situs_zip"]].strip()
             batch.append(rec + (
                 pid, pid.rjust(14, "0"), norm_txt(cty),
@@ -399,6 +603,35 @@ def load_parcels(cx, st):
     st["scope_zips"] = zips
     log("%s parcel rows, %s repeated records dropped, %s in scope"
         % (format(n, ",d"), format(dupes, ",d"), format(n_scope, ",d")))
+    if by_owner is not None:
+        # The join is a per-row lookup that rewrites owner_id and nothing else,
+        # so every kept row lands in exactly one of the three buckets and the
+        # row count cannot move (rule 4). A slip in the branch ladder above is
+        # the one way that stops being true, so it is checked rather than argued.
+        if n_grouped + n_ungrouped + n_nogroup_row != n:
+            raise SystemExit(
+                "load_parcels: %d grouped + %d ungrouped + %d unmatched != %d "
+                "rows loaded; the grouping join lost or double-counted rows"
+                % (n_grouped, n_ungrouped, n_nogroup_row, n))
+        st["parcels_grouped"] = n_grouped
+        st["parcels_ungrouped"] = n_ungrouped
+        st["parcels_no_group_row"] = n_nogroup_row
+        st["parcels_keyed_by_owner"] = n_by_owner
+        st["parcels_keyed_by_address"] = n_by_addr
+        st["parcels_keyed_by_address_real"] = n_addr_real
+        st["group_entities_used"] = len(set(g for g, _o in fold))
+        st["group_fold_pairs"] = len(fold)
+        log("grouping: %s parcels grouped into %s entities, %s ungrouped "
+            "(label 0), %s not in the sidecar, %s folded owner ids"
+            % (format(n_grouped, ",d"),
+               format(st["group_entities_used"], ",d"),
+               format(n_ungrouped, ",d"), format(n_nogroup_row, ",d"),
+               format(len(fold), ",d")))
+        log("  keys: %s matched on the owner key, %s on the address key after "
+            "an owner miss (%s of them recovering a real label)"
+            % (format(n_by_owner, ",d"), format(n_by_addr, ",d"),
+               format(n_addr_real, ",d")))
+    return fold
 
 
 def index_parcels(cx):
@@ -783,6 +1016,41 @@ def build_filings(cx, st, by_parcel):
         % (format(len(filings), ",d"), format(len(officers), ",d"), states))
 
 
+def build_owner_group(cx, st, fold):
+    """Record which ungrouped owner ids each group entity absorbed.
+
+    owner_group is the table this build has always created empty. It is the only
+    place the fold is written down, and it is what a page would read to show that
+    one entity is three spellings of a name. The rows point at owner ids that no
+    longer have an owner row of their own, which is the point: the owner row is
+    the group now, and the name it displays is the one on the parcel at
+    owner.first_rowid.
+
+    No group label goes in here (rule 3). group_id is the group's own owner_id.
+    """
+    if not fold:
+        st["owner_group_rows"] = 0
+        return
+    log("recording the owner fold")
+    cx.executemany(
+        "INSERT INTO owner_group (group_id, owner_id, role, confidence, method) "
+        "VALUES (?,?,'member',1.0,'situs_group_assignments_final')",
+        sorted(fold))
+    cx.commit()
+    st["owner_group_rows"] = len(fold)
+    st["owner_group_groups"] = cx.execute(
+        "SELECT COUNT(DISTINCT group_id) FROM owner_group").fetchone()[0]
+    # A group that absorbed exactly one owner id changed no owner's identity but
+    # its own; the multi-member ones are the consolidation the fold was for.
+    st["owner_group_multi"] = cx.execute(
+        "SELECT COUNT(*) FROM (SELECT group_id FROM owner_group "
+        "GROUP BY group_id HAVING COUNT(*) > 1)").fetchone()[0]
+    log("  %s fold rows over %s entities, %s of them multi-owner"
+        % (format(st["owner_group_rows"], ",d"),
+           format(st["owner_group_groups"], ",d"),
+           format(st["owner_group_multi"], ",d")))
+
+
 def main():
     t0 = time.time()
     tmp = OUT + ".building"
@@ -796,7 +1064,9 @@ def main():
     cx.executescript("PRAGMA journal_mode = OFF; PRAGMA synchronous = OFF;")
     cx.executescript(SCHEMA)
     st = {"errors": []}
-    load_parcels(cx, st)
+    g_owner, g_addr, gid = load_groups(st)
+    fold = load_parcels(cx, st, g_owner, g_addr, gid)
+    del g_owner, g_addr, gid
     cx.commit()
     index_parcels(cx)
     st["parcel_pids"] = cx.execute(
@@ -808,6 +1078,8 @@ def main():
     build_owners(cx, st)
     build_filings(cx, st, by_parcel)
     del by_parcel
+    build_owner_group(cx, st, fold)
+    del fold
     # The parcel and owner indexes belong to the typed tables and are created by
     # typed.retype(); building them here would index staging rows that are about
     # to be dropped.
@@ -842,7 +1114,8 @@ def main():
         % (OUT, os.path.getsize(OUT) / 1048576.0, time.time() - t0))
     for k in ("parcel_rows", "owners", "owners_in_scope", "parcels_in_scope",
               "scrape_rows", "scrape_rows_joined", "scrape_rows_addr_clash",
-              "owner_states"):
+              "owner_states", "group_join", "parcels_grouped",
+              "parcels_no_group_row", "owner_group_rows"):
         log("  %s = %r" % (k, st.get(k)))
 
 
