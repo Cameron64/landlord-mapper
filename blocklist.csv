@@ -1,0 +1,183 @@
+pattern,target,action,category,status,n_owner_names,source,notes
+D3 REAL ESTATE CONSULTANTS,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+"GILL, DENSON & COMPANY",name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+L L CASEY & CO,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+^US$,name,blank_value,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+KE ANDREWS,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+COMMERCIAL,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+UNAVAILABLE,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+FBO,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+EQUITY TRUST COMPANY,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+TAX EXEMPT,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+NONE,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+00000,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+UNKNOWN,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+OWNER,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+ADDRESS,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+CUSTODIAN,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+UNKNOWN CITY,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+UNKNOWN STATE,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+ZIP,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+PROPERTY TAX DEPARTMENT,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+ATTN,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+AVAILABLE UPON REQUEST,name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+"MICHEL ROGERS & MALONEY, PC",name,remove_substring,misc_name,active,,reg_agent_string_gen misc_name_string,"moved out of source, behaviour unchanged"
+815 BRAZOS.+AUSTIN TX 78701,address,remove_substring,misc_address,active,,reg_agent_string_gen misc_add_string,"moved out of source, behaviour unchanged"
+2595 DALLAS PKWY.+FRISCO TX 75034,address,remove_substring,misc_address,active,,reg_agent_string_gen misc_add_string,"moved out of source, behaviour unchanged"
+401 TOM LANDRY HWY.+DALLAS TX 75266,address,remove_substring,misc_address,active,,reg_agent_string_gen misc_add_string,"moved out of source, behaviour unchanged"
+PO BOX 4090 SCOTTSDALE AZ 85261,address,remove_substring,misc_address,active,,reg_agent_string_gen misc_add_string,"moved out of source, behaviour unchanged"
+PO BOX 592226 SAN ANTONIO TX 78259,address,remove_substring,misc_address,active,,reg_agent_string_gen misc_add_string,"moved out of source, behaviour unchanged"
+901.+MOPAC.+AUSTIN TX 78746,address,remove_substring,misc_address,active,,reg_agent_string_gen misc_add_string,"moved out of source, behaviour unchanged"
+901.+MO PAC.+AUSTIN TX 78746,address,remove_substring,misc_address,active,,reg_agent_string_gen misc_add_string,"moved out of source, behaviour unchanged"
+3225 MCLEOD DR.+LAS VEGAS NV 89121,address,remove_substring,misc_address,active,,reg_agent_string_gen misc_add_string,"moved out of source, behaviour unchanged"
+17350 STATE H.+HOUSTON TX 77064,address,remove_substring,misc_address,active,,reg_agent_string_gen misc_add_string,"moved out of source, behaviour unchanged"
+.*PO BOX 15410.+78212.*,address,remove_substring,hub_address,active,226,blocklist_candidates_v2,shared by 226 owner names; selected_by=land-trust-majority
+.*2520 K AVE.+75074.*,address,remove_substring,hub_address,active,136,blocklist_candidates_v2,shared by 136 owner names; selected_by=low-coverage
+.*5900 BALCONES DR.+78731.*,address,remove_substring,hub_address,active,99,blocklist_candidates_v2,shared by 99 owner names; selected_by=low-coverage
+.*PO BOX 171174.+78217.*,address,remove_substring,hub_address,active,91,blocklist_candidates_v2,shared by 91 owner names; selected_by=low-coverage
+.*PO BOX 769346.+78245.*,address,remove_substring,hub_address,active,81,blocklist_candidates_v2,shared by 81 owner names; selected_by=land-trust-majority
+.*3839 BEE CAVES RD.+78746.*,address,remove_substring,hub_address,active,59,blocklist_candidates_v2,shared by 59 owner names; selected_by=low-coverage
+.*19141 STONE OAK PKWY.+78258.*,address,remove_substring,hub_address,active,57,blocklist_candidates_v2,shared by 57 owner names; selected_by=low-coverage
+.*15900 LA CANTERA PKWY.+78256.*,address,remove_substring,hub_address,active,49,blocklist_candidates_v2,shared by 49 owner names; selected_by=low-coverage
+.*1900 SCOFIELD RIDGE PKWY.+78727.*,address,remove_substring,hub_address,active,48,blocklist_candidates_v2,shared by 48 owner names; selected_by=low-coverage
+.*PO BOX 891.+19899.*,address,remove_substring,hub_address,active,46,blocklist_candidates_v2,shared by 46 owner names; selected_by=low-coverage
+.*3939 BEE CAVES RD.+78746.*,address,remove_substring,hub_address,active,45,blocklist_candidates_v2,shared by 45 owner names; selected_by=low-coverage
+.*112 E PECAN ST.+78205.*,address,remove_substring,hub_address,active,44,blocklist_candidates_v2,shared by 44 owner names; selected_by=low-coverage
+.*30 N GOULD ST.+82801.*,address,remove_substring,hub_address,active,42,blocklist_candidates_v2,shared by 42 owner names; selected_by=low-coverage
+.*5301 SW PKWY.+78735.*,address,remove_substring,hub_address,active,39,blocklist_candidates_v2,shared by 39 owner names; selected_by=low-coverage
+.*13501 RR.+78676.*,address,remove_substring,hub_address,active,38,blocklist_candidates_v2,shared by 38 owner names; selected_by=low-coverage
+.*1308 E COMMON ST.+78130.*,address,remove_substring,hub_address,active,35,blocklist_candidates_v2,shared by 35 owner names; selected_by=low-coverage
+.*130 S SEGUIN AVE.+78130.*,address,remove_substring,hub_address,active,35,blocklist_candidates_v2,shared by 35 owner names; selected_by=low-coverage
+.*PO BOX 395.+78011.*,address,remove_substring,hub_address,active,34,blocklist_candidates_v2,shared by 34 owner names; selected_by=low-coverage
+.*3839 BEE CAVE RD.+78746.*,address,remove_substring,hub_address,active,32,blocklist_candidates_v2,shared by 32 owner names; selected_by=low-coverage
+.*3939 BEE CAVE RD.+78746.*,address,remove_substring,hub_address,active,32,blocklist_candidates_v2,shared by 32 owner names; selected_by=low-coverage
+.*1801 S MOPAC EXPY.+78746.*,address,remove_substring,hub_address,active,31,blocklist_candidates_v2,shared by 31 owner names; selected_by=low-coverage
+.*2725 BEE CAVES RD.+78746.*,address,remove_substring,hub_address,active,30,blocklist_candidates_v2,shared by 30 owner names; selected_by=low-coverage
+.*13423 BLANCO RD.+78216.*,address,remove_substring,hub_address,active,30,blocklist_candidates_v2,shared by 30 owner names; selected_by=low-coverage
+.*4808 TIMBERLINE DR.+78746.*,address,remove_substring,hub_address,active,30,blocklist_candidates_v2,shared by 30 owner names; selected_by=low-coverage
+.*PO BOX 8127.+78683.*,address,remove_substring,hub_address,active,28,blocklist_candidates_v2,shared by 28 owner names; selected_by=low-coverage
+.*2303 RIO GRANDE ST.+78705.*,address,remove_substring,hub_address,active,28,blocklist_candidates_v2,shared by 28 owner names; selected_by=low-coverage
+.*11673 JOLLYVILLE RD.+78759.*,address,remove_substring,hub_address,active,28,blocklist_candidates_v2,shared by 28 owner names; selected_by=low-coverage
+.*804 CONGRESS AVE.+78701.*,address,remove_substring,hub_address,active,27,blocklist_candidates_v2,shared by 27 owner names; selected_by=low-coverage
+.*1802 NE LOOP.+78217.*,address,remove_substring,hub_address,active,26,blocklist_candidates_v2,shared by 26 owner names; selected_by=low-coverage
+.*100 CONGRESS AVE.+78701.*,address,remove_substring,hub_address,active,26,blocklist_candidates_v2,shared by 26 owner names; selected_by=low-coverage
+.*13155 NOEL RD.+75240.*,address,remove_substring,hub_address,active,25,blocklist_candidates_v2,shared by 25 owner names; selected_by=low-coverage
+.*7750 BRDWY SAN ANTONIO TX.+78209.*,address,remove_substring,hub_address,active,25,blocklist_candidates_v2,shared by 25 owner names; selected_by=low-coverage
+.*4063 E HOUSTON ST.+78220.*,address,remove_substring,hub_address,active,24,blocklist_candidates_v2,shared by 24 owner names; selected_by=low-coverage
+.*2632 BRDWY ST.+78215.*,address,remove_substring,hub_address,active,23,blocklist_candidates_v2,shared by 23 owner names; selected_by=low-coverage
+.*3700 N CAPITAL OF TEXAS.+78746.*,address,remove_substring,hub_address,active,22,blocklist_candidates_v2,shared by 22 owner names; selected_by=low-coverage
+.*1309 COFFEEN AVE.+82801.*,address,remove_substring,hub_address,active,22,blocklist_candidates_v2,shared by 22 owner names; selected_by=low-coverage
+.*401 E SONTERRA BLVD.+78258.*,address,remove_substring,hub_address,active,21,blocklist_candidates_v2,shared by 21 owner names; selected_by=low-coverage
+.*14255 BLANCO RD.+78216.*,address,remove_substring,hub_address,active,21,blocklist_candidates_v2,shared by 21 owner names; selected_by=low-coverage
+.*6002 CAMP BULLIS RD.+78257.*,address,remove_substring,hub_address,active,21,blocklist_candidates_v2,shared by 21 owner names; selected_by=low-coverage
+.*19210 HUEBNER RD.+78258.*,address,remove_substring,hub_address,active,21,blocklist_candidates_v2,shared by 21 owner names; selected_by=low-coverage
+.*2028 E BEN WHITE BLVD.+78741.*,address,remove_substring,hub_address,active,20,blocklist_candidates_v2,shared by 20 owner names; selected_by=low-coverage
+.*18585 SIGMA RD.+78258.*,address,remove_substring,hub_address,active,20,blocklist_candidates_v2,shared by 20 owner names; selected_by=low-coverage
+.*PO BOX 91882.+78709.*,address,remove_substring,hub_address,active,19,blocklist_candidates_v2,shared by 19 owner names; selected_by=low-coverage
+.*1717 WOODAD CT.+77380.*,address,remove_substring,hub_address,active,19,blocklist_candidates_v2,shared by 19 owner names; selected_by=low-coverage
+.*2515 PECAN ST.+78660.*,address,remove_substring,hub_address,active,19,blocklist_candidates_v2,shared by 19 owner names; selected_by=low-coverage
+.*PO BOX 166.+78627.*,address,remove_substring,hub_address,active,18,blocklist_candidates_v2,shared by 18 owner names; selected_by=low-coverage
+.*21750 HARDY OAK BLVD.+78258.*,address,remove_substring,hub_address,active,18,blocklist_candidates_v2,shared by 18 owner names; selected_by=low-coverage
+.*301 MAIN PLZ.+78130.*,address,remove_substring,hub_address,active,17,blocklist_candidates_v2,shared by 17 owner names; selected_by=low-coverage
+.*999 ADDRESS UNKNOWN WILMINGTON DE.+19899.*,address,remove_substring,hub_address,active,17,blocklist_candidates_v2,shared by 17 owner names; selected_by=low-coverage
+.*1205 SHELDON CV.+78753.*,address,remove_substring,hub_address,active,17,blocklist_candidates_v2,shared by 17 owner names; selected_by=low-coverage
+.*1600 BARTON SPRINGS RD.+78704.*,address,remove_substring,hub_address,active,17,blocklist_candidates_v2,shared by 17 owner names; selected_by=low-coverage
+.*19707 W IH 10 118.+78257.*,address,remove_substring,hub_address,active,17,blocklist_candidates_v2,shared by 17 owner names; selected_by=low-coverage
+.*PO BOX 12251.+78212.*,address,remove_substring,hub_address,active,17,blocklist_candidates_v2,shared by 17 owner names; selected_by=land-trust-majority
+.*2338 N LOOP.+78248.*,address,remove_substring,hub_address,active,16,blocklist_candidates_v2,shared by 16 owner names; selected_by=low-coverage
+.*11115 CALLANISH PARK DR.+78750.*,address,remove_substring,hub_address,active,16,blocklist_candidates_v2,shared by 16 owner names; selected_by=low-coverage
+.*3921 JOSHS CV.+78660.*,address,remove_substring,hub_address,active,16,blocklist_candidates_v2,shared by 16 owner names; selected_by=low-coverage
+.*14546 BROOK HOLLOW BLVD.+78232.*,address,remove_substring,hub_address,active,16,blocklist_candidates_v2,shared by 16 owner names; selected_by=low-coverage
+.*539 W COMMERCE ST.+75208.*,address,remove_substring,hub_address,active,16,blocklist_candidates_v2,shared by 16 owner names; selected_by=low-coverage
+.*2004 LAKESHORE DR.+78746.*,address,remove_substring,hub_address,active,16,blocklist_candidates_v2,shared by 16 owner names; selected_by=low-coverage
+.*21171 S WERN AVE.+90501.*,address,remove_substring,hub_address,active,15,blocklist_candidates_v2,shared by 15 owner names; selected_by=low-coverage
+.*8218 EAGLE CLAW ST.+78242.*,address,remove_substring,hub_address,active,15,blocklist_candidates_v2,shared by 15 owner names; selected_by=low-coverage
+.*3809 SPICEWOOD SPRINGS RD.+78759.*,address,remove_substring,hub_address,active,15,blocklist_candidates_v2,shared by 15 owner names; selected_by=low-coverage
+.*PO BOX 204061.+78720.*,address,remove_substring,hub_address,active,15,blocklist_candidates_v2,shared by 15 owner names; selected_by=low-coverage
+.*1717 W 6 ST.+78703.*,address,remove_substring,hub_address,active,15,blocklist_candidates_v2,shared by 15 owner names; selected_by=low-coverage
+.*PO BOX 279.+78009.*,address,remove_substring,hub_address,active,15,blocklist_candidates_v2,shared by 15 owner names; selected_by=low-coverage
+.*755 E MULBERRY AVE.+78212.*,address,remove_substring,hub_address,active,15,blocklist_candidates_v2,shared by 15 owner names; selected_by=low-coverage
+.*26311 JASON AVE.+78255.*,address,remove_substring,hub_address,active,15,blocklist_candidates_v2,shared by 15 owner names; selected_by=low-coverage
+.*1524 S IH 35 201.+78704.*,address,remove_substring,hub_address,active,15,blocklist_candidates_v2,shared by 15 owner names; selected_by=low-coverage
+.*114 W 7 ST.+78701.*,address,remove_substring,hub_address,active,15,blocklist_candidates_v2,shared by 15 owner names; selected_by=low-coverage
+.*7887 BRDWY ST.+78209.*,address,remove_substring,hub_address,active,15,blocklist_candidates_v2,shared by 15 owner names; selected_by=low-coverage
+.*PO BOX 300464.+78703.*,address,remove_substring,hub_address,active,15,blocklist_candidates_v2,shared by 15 owner names; selected_by=low-coverage
+.*4711 SPICEWOOD SPRINGS RD.+78759.*,address,remove_substring,hub_address,active,14,blocklist_candidates_v2,shared by 14 owner names; selected_by=low-coverage
+.*1170 KANE CONCOURSE 400 BAY.+33154.*,address,remove_substring,hub_address,active,14,blocklist_candidates_v2,shared by 14 owner names; selected_by=low-coverage
+.*7322 OAK MANOR DR.+78229.*,address,remove_substring,hub_address,active,14,blocklist_candidates_v2,shared by 14 owner names; selected_by=low-coverage
+.*999 E BASSE RD.+78209.*,address,remove_substring,hub_address,active,14,blocklist_candidates_v2,shared by 14 owner names; selected_by=low-coverage
+.*PO BOX 6551.+78683.*,address,remove_substring,hub_address,active,14,blocklist_candidates_v2,shared by 14 owner names; selected_by=low-coverage
+.*1101 W 34 ST.+78705.*,address,remove_substring,hub_address,active,14,blocklist_candidates_v2,shared by 14 owner names; selected_by=low-coverage
+.*6001 W PARMER LN.+78727.*,address,remove_substring,hub_address,active,14,blocklist_candidates_v2,shared by 14 owner names; selected_by=low-coverage
+.*3211 SMOKY RDG AUSTIN TX.+78730.*,address,remove_substring,hub_address,active,14,blocklist_candidates_v2,shared by 14 owner names; selected_by=low-coverage
+.*8350 N CENTRAL EXPY.+75206.*,address,remove_substring,hub_address,active,14,blocklist_candidates_v2,shared by 14 owner names; selected_by=low-coverage
+.*1112 W 9 ST.+78703.*,address,remove_substring,hub_address,active,14,blocklist_candidates_v2,shared by 14 owner names; selected_by=low-coverage
+.*9901 IH10 W 777 SAN.+78230.*,address,remove_substring,hub_address,active,14,blocklist_candidates_v2,shared by 14 owner names; selected_by=low-coverage
+.*215 W BANDERA RD.+78006.*,address,remove_substring,hub_address,active,14,blocklist_candidates_v2,shared by 14 owner names; selected_by=low-coverage
+.*110 N IH 35 315.+78681.*,address,remove_substring,hub_address,active,13,blocklist_candidates_v2,shared by 13 owner names; selected_by=low-coverage
+.*7505 DOSWELL LN.+78739.*,address,remove_substring,hub_address,active,13,blocklist_candidates_v2,shared by 13 owner names; selected_by=low-coverage
+.*5150 BRDWY SAN ANTONIO TX.+78209.*,address,remove_substring,hub_address,active,13,blocklist_candidates_v2,shared by 13 owner names; selected_by=low-coverage
+.*10004 WURZBACH RD.+78230.*,address,remove_substring,hub_address,active,13,blocklist_candidates_v2,shared by 13 owner names; selected_by=land-trust-majority
+.*PO BOX 1845.+78767.*,address,remove_substring,hub_address,active,12,blocklist_candidates_v2,shared by 12 owner names; selected_by=low-coverage
+.*PO BOX 741209.+77274.*,address,remove_substring,hub_address,active,12,blocklist_candidates_v2,shared by 12 owner names; selected_by=low-coverage
+.*3800 N LAMAR BLVD.+78756.*,address,remove_substring,hub_address,active,12,blocklist_candidates_v2,shared by 12 owner names; selected_by=low-coverage
+.*901 NE LOOP.+78209.*,address,remove_substring,hub_address,active,12,blocklist_candidates_v2,shared by 12 owner names; selected_by=low-coverage
+.*1801 S MOPAC 100 AUSTIN.+78746.*,address,remove_substring,hub_address,active,12,blocklist_candidates_v2,shared by 12 owner names; selected_by=low-coverage
+.*PO BOX 17038.+78217.*,address,remove_substring,hub_address,active,12,blocklist_candidates_v2,shared by 12 owner names; selected_by=low-coverage
+.*3600 BALCONES DR.+78731.*,address,remove_substring,hub_address,active,11,blocklist_candidates_v2,shared by 11 owner names; selected_by=low-coverage
+.*603 E BRDWY ST.+75078.*,address,remove_substring,hub_address,active,11,blocklist_candidates_v2,shared by 11 owner names; selected_by=low-coverage
+.*660 S BAGDAD RD.+78641.*,address,remove_substring,hub_address,active,11,blocklist_candidates_v2,shared by 11 owner names; selected_by=low-coverage
+.*PO BOX 1376.+78621.*,address,remove_substring,hub_address,active,10,blocklist_candidates_v2,shared by 10 owner names; selected_by=low-coverage
+.*505 FURLONG DR.+78746.*,address,remove_substring,hub_address,active,10,blocklist_candidates_v2,shared by 10 owner names; selected_by=low-coverage
+.*10211 IRONSIDE DR.+78230.*,address,remove_substring,hub_address,active,10,blocklist_candidates_v2,shared by 10 owner names; selected_by=low-coverage
+.*4000 FM.+78626.*,address,remove_substring,hub_address,active,10,blocklist_candidates_v2,shared by 10 owner names; selected_by=low-coverage
+.*2313 LOCKHILL SELMA RD.+78230.*,address,remove_substring,hub_address,active,10,blocklist_candidates_v2,shared by 10 owner names; selected_by=low-coverage
+.*433 N LOOP.+77008.*,address,remove_substring,hub_address,active,10,blocklist_candidates_v2,shared by 10 owner names; selected_by=low-coverage
+.*16192 COASTAL HWY.+19958.*,address,remove_substring,hub_address,active,10,blocklist_candidates_v2,shared by 10 owner names; selected_by=low-coverage
+.*4845 SPICEWOOD SPRINGS RD.+78759.*,address,remove_substring,hub_address,active,10,blocklist_candidates_v2,shared by 10 owner names; selected_by=low-coverage
+.*812 SAN ANTONIO ST.+78701.*,address,remove_substring,hub_address,active,10,blocklist_candidates_v2,shared by 10 owner names; selected_by=low-coverage
+.*3211 SMOKY RIDGE AUSTIN TX.+78730.*,address,remove_substring,hub_address,active,10,blocklist_candidates_v2,shared by 10 owner names; selected_by=low-coverage
+.*8310 N CAPITAL OF TEXAS.+78731.*,address,remove_substring,hub_address,active,10,blocklist_candidates_v2,shared by 10 owner names; selected_by=low-coverage
+.*1150 N LOOP.+78248.*,address,remove_substring,hub_address,active,10,blocklist_candidates_v2,shared by 10 owner names; selected_by=land-trust-majority
+^[[:space:]]*US[[:space:]]*$,address,blank_value,null_value,active,1468,junk_scan 2026-08-11,carries no location at all
+^[[:space:]]*FALLS[[:space:]]+CITY[[:space:]]+TX[[:space:]]+78113[[:space:]]*$,address,blank_value,city_only,review,301,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*FLORESVILLE[[:space:]]+TX[[:space:]]+78114[[:space:]]*$,address,blank_value,city_only,review,217,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*SEGUIN[[:space:]]+TX[[:space:]]+78155[[:space:]]*$,address,blank_value,city_only,review,178,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*ADDRESS[[:space:]]+UNKNOWN[[:space:]]+US[[:space:]]*$,address,blank_value,null_value,active,149,junk_scan 2026-08-11,carries no location at all
+^[[:space:]]*NEW[[:space:]]+BRAUNFELS[[:space:]]+TX[[:space:]]+78130[[:space:]]*$,address,blank_value,city_only,review,134,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*POTH[[:space:]]+TX[[:space:]]+78147[[:space:]]*$,address,blank_value,city_only,review,127,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*CIBOLO[[:space:]]+TX[[:space:]]+78108[[:space:]]*$,address,blank_value,city_only,review,113,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*STOCKDALE[[:space:]]+TX[[:space:]]+78160[[:space:]]*$,address,blank_value,city_only,review,111,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*UNKNOWN[[:space:]]*$,address,blank_value,null_value,active,108,junk_scan 2026-08-11,carries no location at all
+^[[:space:]]*SCHERTZ[[:space:]]+TX[[:space:]]+78154[[:space:]]*$,address,blank_value,city_only,review,97,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*ADDRESS[[:space:]]+UNKNOWN[[:space:]]*$,address,blank_value,null_value,active,75,junk_scan 2026-08-11,carries no location at all
+^[[:space:]]*NA[[:space:]]*$,address,blank_value,null_value,active,67,junk_scan 2026-08-11,carries no location at all
+^[[:space:]]*LA[[:space:]]+VERNIA[[:space:]]+TX[[:space:]]+78121[[:space:]]*$,address,blank_value,city_only,review,67,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*SAN[[:space:]]+ANTONIO[[:space:]]+TX[[:space:]]+78223[[:space:]]*$,address,blank_value,city_only,review,49,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*ADKINS[[:space:]]+TX[[:space:]]+78101[[:space:]]*$,address,blank_value,city_only,review,36,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*SAN[[:space:]]+ANTONIO[[:space:]]+TX[[:space:]]+78209[[:space:]]*$,address,blank_value,city_only,review,36,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*PLEASANTON[[:space:]]+TX[[:space:]]+78064[[:space:]]*$,address,blank_value,city_only,review,34,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*WENBE[[:space:]]+OPERATING[[:space:]]+PO[[:space:]]+BOX[[:space:]]+395[[:space:]]+CHARLOTTE[[:space:]]+TX[[:space:]]+78011[[:space:]]*$,address,blank_value,city_only,review,34,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*SAN[[:space:]]+ANTONIO[[:space:]]+TX[[:space:]]+99999[[:space:]]*$,address,blank_value,city_only,review,31,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*WILMINGTON[[:space:]]+DE[[:space:]]+19899[[:space:]]*$,address,blank_value,city_only,review,31,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*ADDRESS[[:space:]]+UNKNOWN[[:space:]]+PER[[:space:]]+OPERATOR[[:space:]]*$,address,blank_value,null_value,active,30,junk_scan 2026-08-11,carries no location at all
+^[[:space:]]*TX[[:space:]]+US[[:space:]]*$,address,blank_value,null_value,active,30,junk_scan 2026-08-11,carries no location at all
+^[[:space:]]*KARNES[[:space:]]+CITY[[:space:]]+TX[[:space:]]+78118[[:space:]]*$,address,blank_value,city_only,review,28,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*SAN[[:space:]]+ANTONIO[[:space:]]+TX[[:space:]]+78222[[:space:]]*$,address,blank_value,city_only,review,28,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*HOBSON[[:space:]]+TX[[:space:]]+78117[[:space:]]*$,address,blank_value,city_only,review,24,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*SAN[[:space:]]+MARCOS[[:space:]]+TX[[:space:]]+78666[[:space:]]*$,address,blank_value,city_only,review,24,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*CO[[:space:]]+GOODWIN[[:space:]]+MANAGEMENT[[:space:]]+INC[[:space:]]+PO[[:space:]]+BOX[[:space:]]+203310[[:space:]]+AUSTIN[[:space:]]+TX[[:space:]]+78720[[:space:]]*$,address,blank_value,city_only,review,23,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*SAN[[:space:]]+ANTONIO[[:space:]]+TX[[:space:]]+78263[[:space:]]*$,address,blank_value,city_only,review,23,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*BOERNE[[:space:]]+TX[[:space:]]+78006[[:space:]]*$,address,blank_value,city_only,review,22,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*NEW[[:space:]]+BRAUNFELS[[:space:]]+TX[[:space:]]+78132[[:space:]]*$,address,blank_value,city_only,review,21,junk_scan 2026-08-11,"city+state+ZIP with no street line; REVIEW - the has_street predicate misreads 'ONE TOWN CENTER RD', 'POBOX 342363' and C/O prefixes as street-less"
+^[[:space:]]*UNKNOWN[[:space:]]+US[[:space:]]*$,address,blank_value,null_value,active,20,junk_scan 2026-08-11,"carries no location at all; UNDER the hub cap, so live evidence today"
+^[[:space:]]*UNTRACEABLE[[:space:]]+ADDRESS[[:space:]]*$,address,blank_value,null_value,active,20,junk_scan 2026-08-11,"carries no location at all; UNDER the hub cap, so live evidence today"
+^[[:space:]]*UNKNOWN[[:space:]]+ADDRESS[[:space:]]*$,address,blank_value,null_value,active,18,junk_scan 2026-08-11,"carries no location at all; UNDER the hub cap, so live evidence today"
+^[[:space:]]*UNKNOWN[[:space:]]+TX[[:space:]]+US[[:space:]]*$,address,blank_value,null_value,active,16,junk_scan 2026-08-11,"carries no location at all; UNDER the hub cap, so live evidence today"
+^[[:space:]]*ADDRESS[[:space:]]*$,address,blank_value,null_value,active,13,junk_scan 2026-08-11,"carries no location at all; UNDER the hub cap, so live evidence today"
+^[[:space:]]*TX[[:space:]]*$,address,blank_value,null_value,active,11,junk_scan 2026-08-11,"carries no location at all; UNDER the hub cap, so live evidence today"
+^[[:space:]]*UNKNOWN[[:space:]]+ADDRESS[[:space:]]+US[[:space:]]*$,address,blank_value,null_value,active,10,junk_scan 2026-08-11,"carries no location at all; UNDER the hub cap, so live evidence today"
+^[[:space:]]*TAX[[:space:]]+EXEMPT[[:space:]]+NONE[[:space:]]+0[[:space:]]*$,address,blank_value,null_value,active,9,junk_scan 2026-08-11,"carries no location at all; UNDER the hub cap, so live evidence today"
+^[[:space:]]*CO[[:space:]]+FLORES[[:space:]]+GRP[[:space:]]*$,address,blank_value,null_value,active,6,junk_scan 2026-08-11,"carries no location at all; UNDER the hub cap, so live evidence today"
+^[[:space:]]*LAST[[:space:]]+KNOWN[[:space:]]+ADDRESS[[:space:]]+INCORRECT[[:space:]]+CURRENT[[:space:]]+ADDRESS[[:space:]]+UNKNOWN[[:space:]]*$,address,blank_value,null_value,active,5,junk_scan 2026-08-11,"carries no location at all; UNDER the hub cap, so live evidence today"
+^[[:space:]]*XX[[:space:]]+0[[:space:]]*$,address,blank_value,null_value,active,5,junk_scan 2026-08-11,"carries no location at all; UNDER the hub cap, so live evidence today"
