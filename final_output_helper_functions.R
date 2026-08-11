@@ -247,6 +247,23 @@ address_clean = function(data = austin_parcel_data_merged,
                     data_used,
                     useBytes = TRUE)
   # print('4')
+  # A trailing country token is not part of the address, and the source rolls
+  # disagree about writing it: 736,156 rows of owner_address arrive with a
+  # trailing " US" while other rows for the SAME address do not, which splits
+  # one owner's parcels across several match keys downstream. Collapsing them
+  # removes 42,507 duplicate owner_address strings and merges 222 owner
+  # groups, with no growth in the largest group. Anchored to the
+  # ZIP so it can never eat a street name. Note the ZIP+4 hyphen is already
+  # gone by this point (the [[:punct:]] rule above strips it), so
+  # "78209-1234 US" arrives here as "782091234 US"; the lookbehind reads the
+  # five digits immediately before the space, so that case is covered too.
+  # A lookbehind rather than a capture group deliberately: there is no
+  # backreference to escape, so the rule cannot silently degrade in transit.
+  data_used <- sub('(?<=[0-9]{5})[[:space:]]+USA?$',
+                   '',
+                   data_used,
+                   perl = TRUE,
+                   useBytes = TRUE)
   return(trimws(data_used))
   
 }
