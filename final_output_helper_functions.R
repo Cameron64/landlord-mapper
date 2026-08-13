@@ -336,6 +336,71 @@ BLOCKLIST_ACTIONS  <- c('remove_substring', 'blank_value')
 BLOCKLIST_STATUSES <- c('active', 'review')
 BLOCKLIST_APPLIED_STATUS <- 'active'
 
+# ---------------------------------------------------------------------------
+# THE TWO CONSUMERS. reg_agent_string_gen()$addresses is applied to two
+# different kinds of string, and a pattern that is right for one is wrong for
+# the other. This is the single most dangerous thing in this file, because both
+# readings run without error and only one of them is correct.
+#
+#   'cell' -- situs_neighor_gen_clean applies the patterns to ONE address cell
+#             (owner_address, corp_mail_address, ...). Here a whole-value blank
+#             is expressible as a greedy `.*ADDR.*`: the pattern spans the cell,
+#             gsub removes all of it, the cell becomes ''. That is the intent of
+#             every hub_address row -- a registered-agent or law-firm mailing
+#             address is not evidence of who owns a building, so the cell must
+#             carry nothing rather than carry a shared hub.
+#
+#   'blob' -- situs_owner_string_gen applies the SAME patterns to the
+#             CONCATENATED per-situs entity string: every owner name, owner
+#             address, corp name, corp address and agent name for that parcel,
+#             pasted together with spaces. There is no "whole value" here to
+#             blank. A greedy `.*ADDR.*` spans the entire blob, so gsub deletes
+#             the parcel's whole name evidence and it drops out of the cosine
+#             matrix. Measured on the shipped store, applying the hub_address
+#             rows verbatim empties 4,391 of 147,400 blobs (3.0%).
+#
+# So blob mode strips the greedy wrappers and removes only the address run,
+# leaving the surrounding names intact. That is not a special case invented
+# here: it is exactly the form the nine legacy misc_address literals have always
+# used, which is why they have never had this problem.
+#
+# blank_value rows are anchored ^...$ and so cannot span a blob; they are passed
+# through unchanged in both modes.
+# ---------------------------------------------------------------------------
+BLOCKLIST_CONSUMERS <- c('cell', 'blob')
+
+# Greedy wrapper used by whole-cell blank rules. Kept as a named constant so the
+# verification script asserts against the same string the loader strips.
+BLOCKLIST_GREEDY_WRAP <- '.*'
+
+# Strip one leading and one trailing greedy wrapper, so `.*ADDR.*` becomes
+# `ADDR`. Applied per ROW, before the alternation is joined -- unwrapping the
+# joined string would only touch its two ends and would leave every interior
+# pattern still greedy.
+blocklist_unwrap_greedy = function(patterns){
+  w <- BLOCKLIST_GREEDY_WRAP
+  n <- nchar(w)
+  out <- vapply(patterns,
+                function(p){
+                  if (substr(p, 1, n) == w)                 p <- substring(p, n + 1)
+                  if (substr(p, nchar(p) - n + 1, nchar(p)) == w) {
+                    p <- substr(p, 1, nchar(p) - n)
+                  }
+                  p
+                },
+                character(1),
+                USE.NAMES = FALSE)
+  empty <- !nzchar(out)
+  if (any(empty)) {
+    stop('blocklist: unwrapping the greedy wrapper left an empty pattern for ',
+         sum(empty), ' row(s): ',
+         paste(patterns[empty], collapse = ', '),
+         '. A pattern that is nothing but wrappers matches everywhere and is ',
+         'never what was meant.')
+  }
+  out
+}
+
 blocklist_path = function(path = NULL){
   if (!is.null(path)) {
     if (!file.exists(path)) {
@@ -489,8 +554,23 @@ blocklist_read = function(path = NULL){
 # misc_name/misc_address elements are byte identical to the literals they
 # replaced. Category order is order of first appearance in the file, so
 # misc_address keeps the position the old misc_add_string held.
+#
+# `consumer` selects which of the two string shapes the caller will apply these
+# to -- see THE TWO CONSUMERS above. It is required to be explicit at both call
+# sites rather than defaulted, because the wrong value is silent: 'cell'
+# patterns on a blob delete the parcel's whole name evidence, and nothing about
+# the run reports it.
 blocklist_strings = function(path = NULL,
-                             blocklist = NULL){
+                             blocklist = NULL,
+                             consumer = NULL){
+  if (is.null(consumer) || length(consumer) != 1L ||
+      !consumer %in% BLOCKLIST_CONSUMERS) {
+    stop('blocklist: consumer must be one of ',
+         paste(sprintf('"%s"', BLOCKLIST_CONSUMERS), collapse = ', '),
+         ', supplied explicitly. There is no safe default: a greedy whole-cell ',
+         'pattern applied to a concatenated blob deletes the entire blob, and ',
+         'the run does not report it.')
+  }
   if (is.null(blocklist)) blocklist <- blocklist_read(path)
 
   applied <- blocklist[blocklist$status == BLOCKLIST_APPLIED_STATUS, ,
@@ -513,8 +593,11 @@ blocklist_strings = function(path = NULL,
                         cats <- unique(rows$category)
                         lapply(stats::setNames(cats, cats),
                                function(cat_used){
-                                 paste(rows$pattern[rows$category == cat_used],
-                                       collapse = '|')
+                                 pats <- rows$pattern[rows$category == cat_used]
+                                 if (consumer == 'blob') {
+                                   pats <- blocklist_unwrap_greedy(pats)
+                                 }
+                                 paste(pats, collapse = '|')
                                })
                       })
 
@@ -524,7 +607,8 @@ blocklist_strings = function(path = NULL,
 
 #"CORPORATION SERVICE COMPANY D/B/A CSC-LAWYERS INCO"
 reg_agent_string_gen = function(data_used,
-                                cuts_used){
+                                cuts_used,
+                                consumer = NULL){
   registered_agent_inds <- which(c(grepl('RYAN LLC|ASSOC|CONSULT|COGENCY|REGISTER|(IN)?CORPORAT(E|ION)?|SERVICE|LAWYER|CSC|SOLUTION|AGENT|AGENC|LEGAL|BUSINESS|TAX|MAIL|POST|LAW|ADVIS',
                                          data_used$corp_registered_agent_name,
                                          ignore.case = TRUE)
@@ -583,7 +667,7 @@ reg_agent_string_gen = function(data_used,
   # never be added while this was source code. blocklist_strings() raises rather
   # than returning nothing, so a missing or malformed file stops the run instead
   # of quietly producing an unscrubbed extract.
-  blocklist_used   <- blocklist_strings()
+  blocklist_used   <- blocklist_strings(consumer = consumer)
   misc_add_string  <- blocklist_used$addresses
   misc_name_string <- blocklist_used$names
 
@@ -609,8 +693,11 @@ situs_owner_string_gen = function(owner_data){
   
   # print(dim(owner_data))
   # owner_data <- head(owner_data,20000)
+  # 'blob': the patterns below are applied to the concatenated per-situs entity
+  # string, not to one address cell. See THE TWO CONSUMERS above.
   registered_agent_string_list <- reg_agent_string_gen(owner_data,
-                                                       10)
+                                                       10,
+                                                       consumer = 'blob')
   shared_owner_data <- mori::share(owner_data)
   # owner_data <- head(owner_data,100)
   # situs_pIDs <- unique(owner_data$situs_pID)
@@ -879,9 +966,13 @@ situs_neighor_gen_clean = function(owner_data_used){
   
   # owner_data_used <- head(owner_data_used,
   #                         20000)
+  # 'cell': the patterns below are applied to individual address and name cells
+  # in the mutate() further down, where a greedy pattern correctly blanks the
+  # whole cell. See THE TWO CONSUMERS above.
   registered_agent_string_list <- reg_agent_string_gen(owner_data_used,
-                                                       10)
-  pIDs_used <- unique(dplyr::filter(owner_data_used, 
+                                                       10,
+                                                       consumer = 'cell')
+  pIDs_used <- unique(dplyr::filter(owner_data_used,
                                     ((is_financialized ==TRUE) & 
                                        (is_owner_occupied==FALSE))|
                                       (property_units>4),

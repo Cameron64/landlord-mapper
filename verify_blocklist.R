@@ -57,8 +57,11 @@ old_misc_add_string <- list(paste(c('815 BRAZOS.+AUSTIN TX 78701',
                                     '17350 STATE H.+HOUSTON TX 77064'),
                                   collapse = '|'))
 
-bl_raw <- blocklist_read()
-bl     <- blocklist_strings(blocklist = bl_raw)
+bl_raw  <- blocklist_read()
+# 'cell' is the mode that must reproduce the old literals byte for byte: the
+# literals were only ever applied to individual cells.
+bl      <- blocklist_strings(blocklist = bl_raw, consumer = 'cell')
+bl_blob <- blocklist_strings(blocklist = bl_raw, consumer = 'blob')
 
 cat('\n== file composition ==\n')
 print(table(bl_raw$status))
@@ -228,12 +231,14 @@ ok('empty pattern raises', raises(blocklist_read(tmp)),
 d <- bl_raw; d$status <- 'review'
 utils::write.csv(d, tmp, row.names = FALSE)
 ok('zero active rows raises (no silent empty blocklist)',
-   raises(blocklist_strings(tmp)), msg_of(blocklist_strings(tmp)))
+   raises(blocklist_strings(tmp, consumer = 'cell')),
+   msg_of(blocklist_strings(tmp, consumer = 'cell')))
 
 d <- bl_raw[bl_raw$target == 'address', , drop = FALSE]
 utils::write.csv(d, tmp, row.names = FALSE)
 ok('a target losing all its active rows raises',
-   raises(blocklist_strings(tmp)), msg_of(blocklist_strings(tmp)))
+   raises(blocklist_strings(tmp, consumer = 'cell')),
+   msg_of(blocklist_strings(tmp, consumer = 'cell')))
 
 d <- bl_raw
 d$pattern[which(d$action == 'blank_value')[1]] <-
@@ -262,6 +267,79 @@ cat('name element nchar   :',
           sep = '=', collapse = ' '), '\n')
 cat('misc_address is the FIRST address element (position preserved):',
     identical(names(bl$addresses)[[1]], 'misc_address'), '\n')
+
+cat('\n== GATE 5: the cell/blob consumer split ==\n')
+# The defect this gate exists for: a greedy `.*ADDR.*` hub_address pattern is
+# correct on one address cell (it blanks the cell) and catastrophic on the
+# concatenated per-situs blob (it blanks the parcel's entire name evidence).
+
+ok('blocklist_strings with no consumer raises',
+   raises(blocklist_strings(blocklist = bl_raw)),
+   msg_of(blocklist_strings(blocklist = bl_raw)))
+ok('blocklist_strings with an unknown consumer raises',
+   raises(blocklist_strings(blocklist = bl_raw, consumer = 'string')),
+   msg_of(blocklist_strings(blocklist = bl_raw, consumer = 'string')))
+ok('reg_agent_string_gen with no consumer raises',
+   raises(reg_agent_string_gen(data.frame(), 1)))
+
+hub_rows  <- bl_raw[bl_raw$category == 'hub_address', , drop = FALSE]
+hub_cell  <- bl$addresses[['hub_address']]
+hub_blob  <- bl_blob$addresses[['hub_address']]
+
+ok('108 hub_address rows present', nrow(hub_rows) == 108L,
+   sprintf('%d rows', nrow(hub_rows)))
+ok('every hub_address row is written with the greedy wrapper on both ends',
+   all(startsWith(hub_rows$pattern, '.*') & endsWith(hub_rows$pattern, '.*')))
+ok('cell mode keeps the greedy wrappers',
+   identical(hub_cell, paste(hub_rows$pattern, collapse = '|')))
+ok('blob mode strips them, per row, not just at the ends',
+   identical(hub_blob,
+             paste(substr(hub_rows$pattern, 3, nchar(hub_rows$pattern) - 2),
+                   collapse = '|')))
+ok('blob mode leaves no bare .* alternation branch',
+   !any(grepl('(^|\\|)\\.\\*', hub_blob)))
+
+# Categories that were never wrapped must be byte identical in both modes --
+# blob mode is not allowed to disturb the legacy literals.
+for (cat_used in c('misc_address', 'null_value')) {
+  ok(sprintf('%s identical in cell and blob mode', cat_used),
+     identical(bl$addresses[[cat_used]], bl_blob$addresses[[cat_used]]))
+}
+ok('misc_name identical in cell and blob mode',
+   identical(bl$names[['misc_name']], bl_blob$names[['misc_name']]))
+
+# The behavioural statement, on a blob shaped like the real ones: owner name,
+# then a hub address, then a corp name.
+probe_blob <- paste('SMITH FAMILY TRUST',
+                    '1600 BARTON SPRINGS RD STE 300 AUSTIN TX 78704',
+                    'ACME HOLDINGS LLC')
+blob_cellmode <- agent_string_sub(probe_blob, bl$addresses)
+blob_blobmode <- agent_string_sub(probe_blob, bl_blob$addresses)
+
+ok('cell-mode patterns DO empty a blob (this is the defect, reproduced)',
+   !nzchar(trimws(blob_cellmode)),
+   sprintf('-> "%s"', blob_cellmode))
+ok('blob-mode patterns do NOT empty it',
+   nzchar(trimws(blob_blobmode)),
+   sprintf('-> "%s"', trimws(blob_blobmode)))
+ok('blob mode still removes the hub address itself',
+   !grepl('BARTON SPRINGS', blob_blobmode))
+ok('blob mode preserves both owner names either side of it',
+   grepl('SMITH FAMILY TRUST', blob_blobmode) &&
+     grepl('ACME HOLDINGS LLC', blob_blobmode))
+
+# And the same pattern set still blanks a single CELL, which is what the
+# hub_address rows are for in the first place.
+probe_cell <- '1600 BARTON SPRINGS RD STE 300 AUSTIN TX 78704'
+ok('cell mode still blanks a hub address cell outright',
+   !nzchar(trimws(agent_string_sub(probe_cell, bl$addresses))))
+
+ok('blocklist_unwrap_greedy raises on a wrappers-only pattern',
+   raises(blocklist_unwrap_greedy('.*.*')),
+   msg_of(blocklist_unwrap_greedy('.*.*')))
+ok('blocklist_unwrap_greedy leaves an unwrapped pattern alone',
+   identical(blocklist_unwrap_greedy('PO BOX 4090 SCOTTSDALE AZ 85261'),
+             'PO BOX 4090 SCOTTSDALE AZ 85261'))
 
 cat(sprintf('\n==== %s: %d failing gate(s) ====\n',
             if (fails == 0L) 'ALL GATES PASS' else 'GATE FAILURE',
