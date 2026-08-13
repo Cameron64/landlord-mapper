@@ -15,6 +15,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from monitor import bars, render  # noqa: E402
+from monitor.styles import LOG_JS  # noqa: E402
 
 
 def _base_status(**overrides):
@@ -506,3 +507,44 @@ class GlyphLegendTests(unittest.TestCase):
         status["progress"]["running"] = []
         html = render.render_page(status)
         self.assertNotIn('<p class="pm-legend pm-m">', html)
+
+
+class LogPanelSurvivesSwapTests(unittest.TestCase):
+    """Defect 2: the log panel used to load once, then go permanently inert
+    after the first poll swap ("goes blank, collapses, and then just says
+    'Expand to load the tail...' when you expand it again"). Three bugs
+    compounded: (a) LOG_JS bound its "toggle" listener to specific node
+    references captured once at load, which swap() then destroyed; (b)
+    swap()'s `innerHTML` replacement discarded the loaded log text with no
+    way to recover it; (c) the log `<details>` had no `data-key`, so
+    openKeys()/restore() fell back to an unstable positional index. This
+    class cannot run a browser, so it pins the two structural facts that
+    make the fix correct: the stable key exists in the markup, and the JS no
+    longer binds to a node reference that a swap can orphan.
+    """
+
+    def test_log_panel_has_a_stable_data_key(self):
+        html = render.render_page(_base_status())
+        self.assertIn('<details class="pm-log" data-key="log">', html)
+
+    def test_log_js_delegates_instead_of_binding_a_node_reference(self):
+        # Regression guard for the exact shape of the original bug: binding
+        # to `document.querySelector(".pm-log")` at script-load time is what
+        # went stale the moment a swap replaced that node.
+        self.assertNotIn('querySelector(".pm-log")', LOG_JS)
+        # The fix: a single delegated listener on a node a swap never
+        # touches (#pm-main's innerHTML is replaced; `document` itself is
+        # not), bound in the capture phase -- required because the native
+        # "toggle" event does not bubble, so a bubble-phase delegated
+        # listener on an ancestor would never observe it.
+        self.assertIn('document.addEventListener("toggle"', LOG_JS)
+        self.assertIn(', true)', LOG_JS)
+
+    def test_log_js_refetches_rather_than_trusting_a_stale_loaded_flag(self):
+        # After a swap the server always re-renders data-loaded="false" (it
+        # cannot know the client already fetched once), so the fix must key
+        # its "already loaded" check off that same attribute rather than
+        # some separate piece of state that a swap wouldn't reset -- that is
+        # what makes "reopened after a swap" behave the same as "opened for
+        # the first time".
+        self.assertIn('getAttribute("data-loaded") === "true"', LOG_JS)

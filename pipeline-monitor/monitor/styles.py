@@ -439,13 +439,46 @@ POLL_JS = r"""
 # a multi-hour verbose R run's log can be long, so it is never inlined into
 # the page render itself (render.py has no HTTP client and no log lines to
 # put there in the first place; /api/logs is server.py's job).
+#
+# This used to bind a "toggle" listener directly to the specific `.pm-log` /
+# `#pm-log-body` node references captured at script-load time. That breaks
+# the moment POLL_JS's swap() runs (every ~3s): `swap()` does
+# `here.innerHTML = next.innerHTML`, which destroys the old `.pm-log` node
+# wholesale and inserts a brand-new one with no listener attached at all --
+# the captured `det`/`pre` variables are now pointing at detached nodes that
+# will never fire again. The symptom was exactly the reported one: the log
+# loads once, then a poll swap silently strips the panel's ability to ever
+# load again, and a subsequent expand just shows the static placeholder
+# forever.
+#
+# Fix: delegate on `document` in the CAPTURE phase instead of binding to a
+# node reference, so there is nothing to go stale -- whichever `.pm-log`
+# element is live in the DOM at toggle time is the one this sees, swap or no
+# swap. Capture (not the default bubble phase) is required here for a
+# non-obvious reason: the native "toggle" event does NOT bubble, so a
+# delegated listener in the bubble phase on an ancestor would never see it
+# fire on a descendant. Capture dispatch, by contrast, walks from the root
+# down to whatever element the event actually targets, which happens
+# independently of whether the event bubbles back up -- so it still reaches
+# a `document`-level listener. This is bound exactly once, at script load
+# (this file is not re-executed by a swap; only `#pm-main`'s innerHTML is
+# replaced), so there is no risk of double-binding on repeated opens.
+#
+# The other half of the original bug was `render.py`'s `<details class="
+# pm-log">` carrying no `data-key`, so POLL_JS's openKeys()/restore() fell
+# back to a positional index that is unstable as skip-groups collapse and
+# expand -- fixed on that side by giving it `data-key="log"`. Because the
+# server always re-renders the log panel with `data-loaded="false"` (it has
+# no way to know the client already fetched once), restoring `.open = true`
+# after a swap fires a fresh native "toggle" event on the newly-inserted
+# node, which this listener catches and uses to refetch immediately --
+# rather than trying to smuggle the old text across the innerHTML swap, the
+# simplest correct fix is to treat "reopened after a swap" the same as
+# "opened for the first time" and just ask the server again.
 LOG_JS = r"""
 (function () {
-  var det = document.querySelector(".pm-log");
-  var pre = document.getElementById("pm-log-body");
-  if (!det || !pre) return;
-  det.addEventListener("toggle", function () {
-    if (!det.open || pre.getAttribute("data-loaded") === "true") return;
+  function loadLog(pre) {
+    if (!pre || pre.getAttribute("data-loaded") === "true") return;
     fetch("/api/logs?tail=40", { cache: "no-store" }).then(function (r) {
       return r.ok ? r.json() : null;
     }).then(function (data) {
@@ -455,6 +488,12 @@ LOG_JS = r"""
     }).catch(function () {
       pre.textContent = "Could not reach the monitor's log endpoint.";
     });
-  });
+  }
+
+  document.addEventListener("toggle", function (e) {
+    var det = e.target;
+    if (!det || !det.classList || !det.classList.contains("pm-log") || !det.open) return;
+    loadLog(det.querySelector("#pm-log-body"));
+  }, true);
 })();
 """

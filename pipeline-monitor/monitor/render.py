@@ -621,8 +621,15 @@ def _render_freshness_panel(status):
 
 
 def _render_log_panel():
+    # data-key="log" is load-bearing, not decorative: POLL_JS's
+    # openKeys()/restore() falls back to a positional index among
+    # `#pm-main details` when an element has no data-key, and that index is
+    # unstable here because the number of skip-group <details> elements
+    # changes as the run progresses. Without a stable key, a poll swap can
+    # restore "open" onto the wrong element -- or none -- which is exactly
+    # how the log panel used to end up open-but-inert after a refresh.
     return (
-        '<details class="pm-log"><summary>Log · last 40 lines</summary>'
+        '<details class="pm-log" data-key="log"><summary>Log · last 40 lines</summary>'
         '<pre id="pm-log-body" data-loaded="false">Expand to load the tail of '
         'docker logs lm-pipeline.</pre></details>'
     )
