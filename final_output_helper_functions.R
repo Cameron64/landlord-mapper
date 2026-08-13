@@ -899,6 +899,274 @@ NEIGH_CORROB_EXEMPT_SELF <- TRUE
 # under the 150 ceiling from 23 to 65.
 NEIGH_MAX_OWNER_NAMES_PER_GATED_VALUE <- 20L
 
+# --- address validity -------------------------------------------------------
+#
+# WHY this exists: the ONLY filter on an address value before it was allowed to
+# link two parcels was nchar > NEIGH_ADDR_MIN_CHARS. Length is a proxy for
+# "specific", and it is a bad one. "MOHAMMAD A MOTIWALA AUSTIN TX 78733" is 35
+# characters and pins nothing finer than a ZIP; "PO BOX 5 KYLE TX 78640" is 22
+# and pins a delivery box. A value naming only a city is shared by every owner
+# in that city, so it welds unrelated portfolios together -- which is the exact
+# failure the hub cap and the corroboration rule above were added to contain.
+#
+# WHY a predicate and not a blocklist: measured on the 2026-08-12 store there
+# are 1,501 distinct city-only and 249 distinct location-free values spread
+# over five columns. Enumerating those by hand is a list that is wrong the day
+# the next extract lands.
+#
+# WHAT THE OLD TRIAGE SCAN GOT WRONG, since it is the reason this is a real
+# function and not a one-line grepl. That scan was
+#     grepl("^(PO BOX|P O BOX|PO DRAWER|RR |HC |HWY |FM |[0-9])", x)
+# i.e. "does it START with a street number". Most owner addresses in this
+# extract do not: they start with the OWNER'S NAME, or ATTN, or a C/O that
+# address_clean has already stripped to "CO". On a hand-labelled held-out
+# sample of 340 distinct values that scan called 132 street-less, and 74 of
+# them -- 56% -- were real street addresses behind a name prefix. This
+# predicate looks for a street line ANYWHERE in the value, after peeling the
+# city/state/ZIP/country tail, and scores 86% precision on the same labels.
+#
+# NOT SHADOWED, unlike address_clean: address_clean is defined three times
+# (target_helper_functions.R:59, scrape_helper_functions.R:60, and line 83 of
+# this file) and _targets.R sources those three in that order, so only the last
+# definition is ever live and the first two are dead weight that reads as
+# authoritative. These names are defined ONCE, here, in the file that both
+# consumes them and is sourced last. Do not add a second copy to the other
+# helper files "for convenience" -- that is precisely how address_clean got
+# into its current state.
+
+ADDR_VALIDITY_LEVELS <- c("street", "city_only", "no_location", "unparseable")
+
+ADDR_SUBDIVISIONS <- c(
+  "AL","AK","AZ","AR","CA","CO","CT","DE","DC","FL","GA","HI","ID","IL","IN",
+  "IA","KS","KY","LA","ME","MD","MA","MI","MN","MS","MO","MT","NE","NV","NH",
+  "NJ","NM","NY","NC","ND","OH","OK","OR","PA","RI","SC","SD","TN","TX","UT",
+  "VT","VA","WA","WV","WI","WY","PR","VI","GU","AS","MP",
+  "AB","BC","MB","NB","NL","NS","NT","NU","ON","PE","QC","SK","YT",
+  "SIN","GT","QRO","JAL","BCN","CHIH","SON","TAM","VER","YUC","EDMX","CDMX",
+  "DF","DIF","MOR","MEX",
+  # "TE"/"TEX" are not typos to fix upstream: TCAD and the scraper both emit
+  # them, and both spellings appear on values that are otherwise identical.
+  "TE","TEX","TEXAS","CALIFORNIA","FLORIDA","NEW YORK","ILLINOIS","COLORADO",
+  "ARIZONA","NEVADA","GEORGIA","OKLAHOMA","LOUISIANA","MICHIGAN","MISSOURI",
+  "TENNESSEE","VIRGINIA","WASHINGTON","OREGON","OHIO","INDIANA","KANSAS",
+  "MINNESOTA","WISCONSIN","ALABAMA","ARKANSAS","MISSISSIPPI","KENTUCKY",
+  "MARYLAND","MASSACHUSETTS","CONNECTICUT","NEW JERSEY","PENNSYLVANIA",
+  "NORTH CAROLINA","SOUTH CAROLINA","UTAH","IDAHO","MONTANA","WYOMING",
+  "NEBRASKA","IOWA","MAINE","VERMONT","DELAWARE","HAWAII","ALASKA",
+  "NEW MEXICO","WEST VIRGINIA","RHODE ISLAND","NEW HAMPSHIRE","NORTH DAKOTA",
+  "SOUTH DAKOTA","MICHOACAN","QUERETARO","JALISCO","MORELOS","ONTARIO",
+  "QUEBEC","ALBERTA")
+
+ADDR_FOREIGN_COUNTRIES <- c(
+  "MEXICO","MEX","MX","CANADA","CAN","CHINA","CN","JAPAN","JP","ENGLAND",
+  "KINGDOM","UK","GB","SCOTLAND","IRELAND","FRANCE","GERMANY","SWITZERLAND",
+  "CH","ISRAEL","INDIA","AUSTRALIA","SINGAPORE","SPAIN","ITALY","NETHERLANDS",
+  "BRAZIL","ARGENTINA","VENEZUELA","PANAMA","COLOMBIA","BAHAMAS","BERMUDA",
+  "HONG KONG","TAIWAN","KOREA","PHILIPPINES","VIETNAM","THAILAND","TURKEY",
+  "NIGERIA","EGYPT","GREECE","POLAND","SWEDEN","NORWAY","DENMARK","BELGIUM",
+  "AUSTRIA","PORTUGAL","RUSSIA","UKRAINE","PAKISTAN","IRAN","IRAQ","LEBANON",
+  "JORDAN","KUWAIT","QATAR","EMIRATES","ARABIA","MALAYSIA","INDONESIA",
+  "NEW ZEALAND","CHILE","PERU","ECUADOR","URUGUAY","GUATEMALA","HONDURAS",
+  "COSTA RICA","NICARAGUA","EL SALVADOR","CUBA","JAMAICA","HAITI","W INDIES")
+
+# Stripped like a country but deliberately NOT counted as place evidence: "US"
+# is the tail of "UNKNOWN US" and "BAD ADDRESS US" far more often than it is
+# the tail of a real address, and knowing a parcel's owner is in the United
+# States narrows nothing in a Texas appraisal extract.
+ADDR_DOMESTIC_COUNTRIES <- c("US","USA","U S A","UNITED STATES","AMERICA","NONUS")
+
+# Longest-first, so "NEW YORK" is tried before "NY" and "MEXICO" before "MX".
+addr_alt <- function(x) paste0("(?:", paste(x[order(-nchar(x))], collapse = "|"), ")")
+
+ADDR_RE_ZIP     <- "[[:space:]]([0-9]{5}(?:-?[0-9]{4})?)$"
+ADDR_RE_ZIPONLY <- "^([0-9]{5}(?:-?[0-9]{4})?)$"
+ADDR_RE_CAPOST  <- "[[:space:]]([A-Z][0-9][A-Z][[:space:]]?[0-9][A-Z][0-9])$"
+ADDR_RE_SUBDIV  <- paste0("[[:space:]]", addr_alt(ADDR_SUBDIVISIONS), "$")
+ADDR_RE_SUBONLY <- paste0("^", addr_alt(ADDR_SUBDIVISIONS), "$")
+ADDR_RE_FOREIGN <- paste0("[[:space:]]", addr_alt(ADDR_FOREIGN_COUNTRIES), "$")
+ADDR_RE_FORONLY <- paste0("^", addr_alt(ADDR_FOREIGN_COUNTRIES), "$")
+ADDR_RE_DOMEST  <- paste0("(?:^|[[:space:]])", addr_alt(ADDR_DOMESTIC_COUNTRIES), "$")
+
+# Tail debris that is neither a location nor a country: placeholder ZIPs
+# (00000, 99999, 9999999), lone zeroes, and the words the appraisal districts
+# park in the field when they have nothing.
+ADDR_RE_TAILJUNK <- paste0("(?:^|[[:space:]])(?:([0-9])\\1{4,}|0+|NA|NULL|NONE|",
+                           "UNKNOWN|BAD|ADDRESS|ADDR)$")
+
+# A house number: a digit-initial token WITH a following token that has a
+# letter in it. The "following token" half is the whole point -- it is what
+# keeps "TAX EXEMPT NONE 0" and "DEPT 906" out, because a number with nothing
+# after it is a placeholder or a department code, not a street number.
+ADDR_RE_HOUSENUM <- "(?:^|\\s)\\d[A-Z0-9]*\\s+\\S*[A-Z]"
+
+# "No. 19" -- the number-sign abbreviation. address_clean strips the period and
+# closes the space, so a lot number arrives as NO19, and the OCR variant N019
+# (letter O read as zero) arrives alongside it. Both are house numbers, but
+# neither starts with a digit, so ADDR_RE_HOUSENUM cannot see them. Measured:
+# without this, "NO19 LAKE CHEROKEE LONGVIEW TX 75603" reads as city_only and
+# splits NACTY PROPERTIES LP away from NACTY PROPERTIES L P -- the same owner.
+ADDR_RE_NUMSIGN <- "(?:^|\\s)N[O0][0-9]+\\s+\\S*[A-Z]"
+
+# Box and drawer forms, including the no-space "POBOX" and the OCR corruptions
+# ("PO BPX", "PO BOCX", "PO BIX") that survive address_clean.
+#
+# [A-Z]{0,3} before the digit covers the alphanumeric lockbox ids -- PO BOX
+# A3880, BH003, DD01, G2. It cannot swallow "PO BOX PORT ARANSAS", because the
+# letters must be followed by a DIGIT and "POR"/"PO"/"P" are each followed by a
+# letter there. The bare "PO" branch is anchored at the head because unanchored
+# it matches the note "UNKNOWN PER PO 25OCT96".
+ADDR_RE_BOX_NUM <- paste0("(?:^|\\s)(?:P[[:space:]]?O[[:space:]]?BOX|POBOX|",
+                          "PO[[:space:]]?B[OPI][CX]?X?|LOCK[[:space:]]?BOX|BOX|",
+                          "PO[[:space:]]?DRAWER|DRAWER|PMB|APO|FPO)",
+                          "[[:space:]]?#?[[:space:]]?[A-Z]{0,3}[0-9]",
+                          "|^PO[[:space:]]?[A-Z]{0,2}[0-9]")
+
+# Lettered boxes -- "PO BOX MM", "DRAWER A" -- are real delivery points. This
+# branch excludes a bare "PO" keyword and refuses "BOX" as the box id, so that
+# "PO BOX PORT ARANSAS TX 78373", a box with no identifier at all, is not read
+# as box "BOX".
+ADDR_RE_BOX_ALPHA <- paste0("(?:^|\\s)(?:P[[:space:]]?O[[:space:]]?BOX|POBOX|",
+                            "LOCK[[:space:]]?BOX|BOX|PO[[:space:]]?DRAWER|DRAWER)",
+                            "[[:space:]]+(?!BOX)[A-Z]{1,3}(?=[[:space:]]|$)")
+
+ADDR_RE_RURAL <- paste0("(?:^|\\s)(?:STAR[[:space:]]?(?:ROUTE|RT)|ROUTE|RTE|RT|RR|HCR?|HC)",
+                        "[[:space:]]?#?[[:space:]]?[0-9]")
+
+# "ONE TOWN CENTER RD", "NINE GREENWY PLZ", "SIX DESTA DR". Anchored at the
+# head because a spelled number anywhere else is usually part of a city or a
+# business name.
+ADDR_RE_SPELLED_NUM <- paste0("^(?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE|TEN|",
+                              "ELEVEN|TWELVE|FIFTEEN|TWENTY)[[:space:]]")
+
+# Street-type suffixes trusted to imply a street line on their own.
+#
+# WHY this list is shorter than the obvious one: PL, PARK, CENTER, POINT, RUN,
+# PASS, BEND, HILL, CREEK, RIDGE, SQ, WALK, TOWER, BUILDING, HWY and HIGHWAY
+# are all DELIBERATELY absent, because each also appears inside a Texas city
+# name or an agency name -- CEDAR PARK, PIPE CREEK, LIBERTY HILL, SPRING
+# BRANCH, KIRBY BUILDING, STATE HIGHWY PUBLIC TRANS COMM -- and including any
+# of them turns city-only values into false streets. A street WITH a number
+# does not need this rule at all; it exists only for values like "CAT MTN CV
+# AUSTIN TX 78731", where the house number is missing but the street is not.
+ADDR_RE_STREETWORD <- paste0("[[:space:]](?:ST|STREET|AVE|AV|AVENUE|RD|ROAD|DR|DRIVE|",
+                             "LN|LANE|BLVD|BOULEVARD|BL|BLV|CIR|CIRCLE|CT|COURT|TRL|",
+                             "TRAIL|WY|WAY|PKWY|PARKWAY|FWY|FRWY|EXPWY|EXPRESSWAY|LOOP|",
+                             "CV|COVE|TER|TERRACE|PLZ|PLAZA)(?:[[:space:]]|$)")
+
+# Tokens carrying no information. Lifted from the misc_name_string literals in
+# reg_agent_string_gen, which already scrubs this exact junk out of the NAME
+# columns; the same words land in the address columns and nothing removed them.
+ADDR_RE_JUNK <- paste0("(?:^|\\s)(?:UNKNOWN|UNAVAILABLE|NONE|NULL|NA|ADDRESS|ADDR|CITY|",
+                       "STATE|ZIP|OWNER|TAX|EXEMPT|AVAILABLE|UPON|REQUEST|PENDING|PER|",
+                       "OPERATOR|DELETED|SAME|VARIOUS|MULTIPLE|CONFIDENTIAL|WITHHELD|",
+                       "BAD|DO|[0-9]+|N|X)(?=\\s|$)")
+
+# Peel trailing countries and tail junk, repeatedly. Returns the shortened
+# vector and a parallel flag saying whether a FOREIGN country -- which IS place
+# evidence, unlike "US" -- was among what came off.
+#
+# Defined at TOP LEVEL, like every other named helper in this file, so a future
+# future/multidplyr call site cannot serialise a caller's frame along with it.
+addr_peel_tail <- function(h, rounds) {
+  foreign <- rep(FALSE, length(h))
+  for (i in seq_len(rounds)) {
+    foreign <- foreign | grepl(ADDR_RE_FOREIGN, h) | grepl(ADDR_RE_FORONLY, h)
+    h <- sub(ADDR_RE_FOREIGN, "", h)
+    h[grepl(ADDR_RE_FORONLY, h)] <- ""
+    h <- sub(ADDR_RE_DOMEST, "", h)
+    h <- sub(ADDR_RE_TAILJUNK, "", h, perl = TRUE)
+    h <- trimws(h)
+  }
+  list(h = h, foreign = foreign)
+}
+
+# Classify each value as one of ADDR_VALIDITY_LEVELS. Vectorised; safe on NA.
+address_validity <- function(x) {
+  n <- length(x)
+  out <- rep(NA_character_, n)
+
+  s <- toupper(as.character(x))
+  s[is.na(s)] <- ""
+  s <- gsub("[^A-Z0-9 ]", " ", s)
+  s <- gsub("[[:space:]]+", " ", s)
+  s <- trimws(s)
+
+  out[!nzchar(s)] <- "no_location"
+  # No letter anywhere: there is nothing to classify, which is different from
+  # something we can positively call location-free. "TX" is NOT this case -- it
+  # has a letter, it peels to an empty head, and it lands in no_location.
+  out[is.na(out) & !grepl("[A-Z]", s)] <- "unparseable"
+
+  todo <- which(is.na(out))
+  h <- s[todo]
+
+  # Peel the tail. ORDER AND REPETITION ARE LOAD BEARING:
+  #
+  #   * countries and tail junk REPEAT, because "COL DELICIAS ... 62330 MEXICO
+  #     MX" and "CD DE MEXICO 57265 00000 MX" stack two and three of them.
+  #   * the postal code and the subdivision are peeled AT MOST ONCE EACH. An
+  #     earlier version looped over everything four times and ate the box
+  #     number out of "PO BOX 18188 TX 78218": strip 78218, strip TX, and the
+  #     box number 18188 is itself now a trailing five-digit run. One pass
+  #     cannot make that mistake, and no observed value needs two.
+  p <- addr_peel_tail(h, 3L)
+  h <- p$h
+  for_found <- p$foreign
+
+  zip_found <- grepl(ADDR_RE_ZIP, h) | grepl(ADDR_RE_ZIPONLY, h) |
+               grepl(ADDR_RE_CAPOST, h)
+  h <- sub(ADDR_RE_ZIP, "", h)
+  h <- sub(ADDR_RE_CAPOST, "", h)
+  h[grepl(ADDR_RE_ZIPONLY, h)] <- ""
+  h <- trimws(h)
+
+  # SUBONLY is applied ONLY where SUBDIV did not already fire. Otherwise
+  # "NEW YORK NY 10038" peels NY, is left with "NEW YORK" -- itself a full
+  # state name in the list -- and empties out into no_location, losing the
+  # city. One subdivision per value: a city sharing its name with a state is
+  # still a city.
+  sub_hit   <- grepl(ADDR_RE_SUBDIV, h)
+  only_hit  <- !sub_hit & grepl(ADDR_RE_SUBONLY, h)
+  sub_found <- sub_hit | only_hit
+  h <- sub(ADDR_RE_SUBDIV, "", h)
+  h[only_hit] <- ""
+  h <- trimws(h)
+
+  p <- addr_peel_tail(h, 2L)
+  h <- p$h
+  for_found <- for_found | p$foreign
+
+  has_place <- zip_found | sub_found | for_found
+  junk_only <- !nzchar(trimws(gsub("[[:space:]]+", " ",
+                                   gsub(ADDR_RE_JUNK, " ", h, perl = TRUE))))
+
+  has_street <- grepl(ADDR_RE_HOUSENUM, h, perl = TRUE) |
+                grepl(ADDR_RE_NUMSIGN, h, perl = TRUE) |
+                grepl(ADDR_RE_BOX_NUM, h, perl = TRUE) |
+                grepl(ADDR_RE_BOX_ALPHA, h, perl = TRUE) |
+                grepl(ADDR_RE_RURAL, h) |
+                grepl(ADDR_RE_SPELLED_NUM, h) |
+                # Bare street name, no number. Trusted only when the value also
+                # carries a place, so "STATE HWY PUBLIC TRANSPORTATION COMM US"
+                # -- an agency with no location at all -- is not promoted.
+                (has_place & !junk_only & grepl(ADDR_RE_STREETWORD, h))
+
+  # city_only needs a place AND a surviving head to name it. A value peeling to
+  # nothing held only tail tokens -- "TX", "TX 78063", "ADDRESS UNKNOWN TX
+  # 78063" -- and a ZIP with no city attached is not something anyone can group
+  # on, so those stay no_location rather than being promoted on the ZIP alone.
+  cls <- rep("no_location", length(h))
+  cls[!has_street & has_place & nzchar(h) & !junk_only] <- "city_only"
+  cls[has_street] <- "street"
+
+  out[todo] <- cls
+  factor(out, levels = ADDR_VALIDITY_LEVELS)
+}
+
+# The gate itself. Only a value carrying a street line is evidence that two
+# parcels share an owner; everything else names a city at best.
+address_is_groupable <- function(x) address_validity(x) == "street"
+
 # Value -> row-indices index in CSR form.
 #
 # WHY not split(seq_len(n), col): split would materialise a list with one R
@@ -1061,6 +1329,7 @@ situs_neighor_gen = function(situs_owner_cosine_dist_matrix,
   edge_g <- vector("list", NEIGH_COSINE_CLASS)
   edge_t <- vector("list", NEIGH_COSINE_CLASS)
   hub_dropped <- integer(0)
+  addr_dropped <- integer(0)
 
   for (k in seq_along(NEIGH_MATCH_COLS)) {
     cname <- NEIGH_MATCH_COLS[[k]]
@@ -1097,6 +1366,26 @@ situs_neighor_gen = function(situs_owner_cosine_dist_matrix,
       hub_dropped <- c(hub_dropped,
                        stats::setNames(length(unique(v_vid[hub])), cname))
       rm(n_owners, hub)
+
+      # Validity gate. Runs AFTER the hub cap so that hub_dropped keeps the
+      # meaning it had before this gate existed and stays comparable against
+      # older run logs; the two are conjunctions into the same `ok`, so the
+      # edge set does not depend on the order.
+      #
+      # Applied PER DISTINCT VALUE rather than per row: the verdict is a
+      # property of the string, ix$uv already holds every distinct value of the
+      # column, and running a dozen regexes over 1.47M distinct owner_address
+      # values instead of 2.13M rows is the difference between seconds and
+      # minutes. NA cannot survive -- `ok` is already FALSE there.
+      addr_ok <- address_is_groupable(ix$uv)[v_vid]
+      addr_ok[is.na(addr_ok)] <- FALSE
+      ok <- ok & addr_ok
+      addr_dropped <- c(addr_dropped,
+                        stats::setNames(length(unique(v_vid[!addr_ok &
+                                                            !is.na(v) &
+                                                            nzchar(v)])),
+                                        cname))
+      rm(addr_ok)
     }
 
     vsel <- v_vid[ok]
@@ -1212,6 +1501,8 @@ situs_neighor_gen = function(situs_owner_cosine_dist_matrix,
   cat("situs_neighor_gen: gated values dropped by the >",
       NEIGH_MAX_OWNER_NAMES_PER_GATED_VALUE, "distinct-owner hub cap:",
       paste(names(hub_dropped), hub_dropped, sep = "=", collapse = " "), "\n")
+  cat("situs_neighor_gen: gated values dropped as not carrying a street line:",
+      paste(names(addr_dropped), addr_dropped, sep = "=", collapse = " "), "\n")
   eg <- eg[keep_edge]
   et <- et[keep_edge]
   rm(ec, witnesses, keep_edge)
