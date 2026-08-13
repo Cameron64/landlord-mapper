@@ -37,6 +37,7 @@ COPY *.py            .
 COPY AUSTIN*.zip            .
 COPY *.txt            .
 COPY link_used.csv            .
+COPY blocklist.csv            .
 
 #EXPOSE 8080
 CMD ["R", "-e", "targets::tar_make(callr_function = NULL, use_crew = FALSE, as_job = FALSE)"]
