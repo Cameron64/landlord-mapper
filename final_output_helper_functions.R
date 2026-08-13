@@ -302,7 +302,34 @@ agent_string_sub = function(result_string, string_list){
 # addresses.
 #
 # Only status == "active" rows are ever applied. `review` rows are carried so
-# the reasoning survives, and are inert by construction.
+# the reasoning survives, and are inert by construction. The file currently
+# holds none; the status column stays because the staging mechanism is the
+# point, and verify_blocklist.R proves it still works by flipping a row.
+#
+# RETIRED 2026-08-13: the `city_only` category, 24 rows, all status=review.
+# They were never applied, and auditing them against the address-validity
+# predicate showed none of them ever should be:
+#
+#   22 of 24 reconstruct to values of 22 characters or fewer, so the shipped
+#      nchar > NEIGH_ADDR_MIN_CHARS gate already drops them. Activating those
+#      rows would have changed nothing at all.
+#
+#    2 of 24 are real addresses the predicate reads as `street`, and blanking
+#      them would have destroyed good evidence:
+#        CO GOODWIN MANAGEMENT INC PO BOX 203310 AUSTIN TX 78720   (23 owners)
+#        WENBE OPERATING PO BOX 395 CHARLOTTE TX 78011             (34 owners)
+#      Both are C/O-prefixed PO boxes, which is what the original junk scan
+#      misread as street-less; its own `notes` column says so. They are NOT
+#      city-only values and the category was the wrong home for them.
+#
+# Those two may still be worth a `hub_address` row on the separate ground that
+# a management company's PO box is not evidence of who owns a building. That is
+# a different claim needing different evidence, so it is deliberately NOT made
+# here. Recover the rows with `git log -p blocklist.csv` if it is ever taken up.
+#
+# The lesson worth keeping: a parked row is not free. These sat looking like
+# pending work when 22 were dead on arrival and 2 were wrong, and anyone who
+# activated the category on trust would have blanked 57 owners' addresses.
 #
 # FAILING LOUD IS THE POINT. A missing or malformed file raises. It must never
 # degrade to an empty blocklist, because an empty blocklist is

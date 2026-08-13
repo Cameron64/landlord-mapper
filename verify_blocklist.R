@@ -140,38 +140,41 @@ if (nzchar(sample_file) && file.exists(sample_file)) {
   cat('[SKIP] real-value comparison (set LM_BLOCKLIST_SAMPLE to an .rds)\n')
 }
 
-cat('\n== GATE 2: the 24 city_only rows are inert ==\n')
-city_rows <- bl_raw[bl_raw$category == 'city_only', , drop = FALSE]
-ok('24 city_only rows present in the file', nrow(city_rows) == 24L,
-   sprintf('%d rows', nrow(city_rows)))
-ok('every city_only row has status review',
-   all(city_rows$status == 'review'),
-   paste(unique(city_rows$status), collapse = ','))
-all_returned <- unlist(c(bl$addresses, bl$names), use.names = FALSE)
+cat('\n== GATE 2: the retired city_only category, and the staging mechanism ==\n')
+# The 24 city_only rows were retired 2026-08-13: 22 were already dropped by the
+# nchar gate and 2 were real addresses the predicate reads as `street`. This
+# gate now holds the retirement in place.
+ok('no city_only rows remain in the file',
+   !any(bl_raw$category == 'city_only'),
+   sprintf('%d rows', sum(bl_raw$category == 'city_only')))
 ok('no city_only category is returned by blocklist_strings',
    !('city_only' %in% c(names(bl$addresses), names(bl$names))),
    paste(c(names(bl$addresses), names(bl$names)), collapse = ','))
-ok('no city_only pattern appears anywhere in the returned strings',
-   !any(vapply(city_rows$pattern,
-               function(p) any(grepl(p, all_returned, fixed = TRUE)),
-               logical(1))))
-# And prove they would have matched something had they been active, so the
-# inertness is a filter and not an accident of the patterns being dead.
-ok('city_only patterns are live regexes (would match if activated)',
-   all(vapply(city_rows$pattern,
-              function(p){
-                probe <- gsub('\\[\\[:space:\\]\\]\\*', '',
-                              gsub('\\[\\[:space:\\]\\]\\+', ' ',
-                                   gsub('\\^|\\$', '', p)))
-                grepl(p, probe)
-              },
-              logical(1))))
+ok('every remaining row is active',
+   all(bl_raw$status == 'active'),
+   paste(sort(unique(bl_raw$status)), collapse = ','))
 ok('active row count is 158',
    sum(bl_raw$status == 'active') == 158L,
    sprintf('%d', sum(bl_raw$status == 'active')))
-ok('review row count is 24',
-   sum(bl_raw$status == 'review') == 24L,
-   sprintf('%d', sum(bl_raw$status == 'review')))
+ok('total row count is 158',
+   nrow(bl_raw) == 158L, sprintf('%d', nrow(bl_raw)))
+
+# The file holds no review rows now, so prove the staging mechanism still works
+# rather than assuming it. Flip one active row to review and watch it vanish
+# from what gets applied. Without this the `status` column could rot into a
+# decorative field and nothing would notice.
+staged <- bl_raw
+victim <- which(staged$category == 'misc_address')[[1]]
+staged$status[[victim]] <- 'review'
+staged_out <- blocklist_strings(blocklist = staged, consumer = 'cell')
+ok('flipping a row to review removes it from the applied patterns',
+   !grepl(bl_raw$pattern[[victim]],
+          staged_out$addresses[['misc_address']], fixed = TRUE),
+   sprintf('withheld: %s', bl_raw$pattern[[victim]]))
+ok('and the other rows in its category are untouched',
+   nchar(staged_out$addresses[['misc_address']]) ==
+     nchar(bl$addresses[['misc_address']]) -
+       nchar(bl_raw$pattern[[victim]]) - 1L)
 
 cat('\n== GATE 3: malformed / absent CSV raises ==\n')
 raises <- function(expr) inherits(tryCatch(expr, error = function(e) e), 'error')
