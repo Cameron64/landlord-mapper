@@ -54,6 +54,40 @@ COPY *.txt            .
 COPY link_used.csv            .
 COPY blocklist.csv            .
 
+# ---------------------------------------------------------------------------
+# CODE SYNC STAGING. Read entrypoint.sh for the full reason. In short: a run
+# binds a volume over /landlord_mapper_etl so the appraisal exports and the
+# _targets store survive between runs, and that volume's copy of the code
+# SHADOWS everything the COPY lines above put there. From the second run onward
+# a rebuilt image executes stale sources with no warning. The entrypoint copies
+# this staging directory over the volume on every start, so the image stays the
+# single source of truth for code while the data is left alone.
+#
+# This whole mechanism lived ONLY inside the built images until 2026-08-13. The
+# script and these lines were added to a container out of band and never
+# committed, so a fresh build from this repo produced an image with no
+# ENTRYPOINT at all, which silently ran whatever code the volume happened to
+# hold. Discovered when tar_outdated() reported nothing stale after a change
+# that certainly should have invalidated targets.
+#
+# ANYTHING THE PIPELINE READS AT RUNTIME BELONGS IN THIS LIST. blocklist.csv is
+# here and was not in the images' copy: the loader resolves it against the
+# working directory, i.e. the volume, so without this line every run would stop
+# at "blocklist.csv not found" the moment the blocklist is consulted.
+# ---------------------------------------------------------------------------
+COPY _targets.R                              /opt/pipeline-src/
+COPY final_output_helper_functions.R         /opt/pipeline-src/
+COPY scrape_helper_functions.R               /opt/pipeline-src/
+COPY supplementary_scrape_helper_functions.R /opt/pipeline-src/
+COPY target_helper_functions.R               /opt/pipeline-src/
+COPY TCAD_parse.py                           /opt/pipeline-src/
+COPY blocklist.csv                           /opt/pipeline-src/
+COPY ["HHI Data 2024 United States.xlsx", "/opt/pipeline-src/"]
+
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chmod +x /usr/local/bin/entrypoint.sh
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+
 #EXPOSE 8080
 CMD ["R", "-e", "targets::tar_make(callr_function = NULL, use_crew = FALSE, as_job = FALSE)"]
 
