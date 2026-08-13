@@ -173,16 +173,49 @@ img, svg, table { max-width: 100%; }
 }
 .pm-row .pm-warn { color: var(--ochre); margin-left: 0.3rem; }
 
-/* the warning glyph is a <summary> inside a <details> now, not bare text --
-   tap/click/keyboard-Enter reveals the actual warning text below, so the
-   glyph is never the only way to reach it (title= alone is invisible on
-   touch and to most screen readers). */
-.pm-warn-disclosure { display: inline-block; }
-.pm-warn-disclosure summary { cursor: pointer; list-style: none; }
-.pm-warn-disclosure summary::-webkit-details-marker { display: none; }
-.pm-warn-body {
-  display: block; margin-top: 0.3rem; max-width: 34rem;
-  font-size: 11px; color: var(--ink-2); white-space: pre-wrap; word-break: break-word;
+/* The warning glyph is a plain <button> now (was a <summary> inside a
+   <details>) -- tap/click/keyboard-Enter opens the shared dialog below
+   rather than an inline body, because the inline body was the thing that
+   overflowed (see render.py's _render_warning). Reset the button chrome
+   explicitly, matching .pm-themebtn's approach elsewhere on this page,
+   rather than reaching for `all: unset`. */
+.pm-warn {
+  background: none; border: 0; padding: 0; font: inherit; cursor: pointer;
+  -webkit-appearance: none; appearance: none;
+}
+
+/* -- warning dialog: the full text that used to sit inline in an expanded
+   <details> body now lives here instead, because a 2 KB unbroken R warning
+   (no spaces to break on in the worst observed case) has nowhere to go in
+   a body sized for a short warning. Both wrap rules are required together:
+   `white-space: pre-wrap` alone still lets a single very long run push the
+   box wider before wrapping, and `overflow-wrap: anywhere` alone does
+   nothing without pre-wrap to also respect the text's own line breaks.
+   `max-height` + its own scrollbar is the other half -- it bounds the
+   dialog's growth instead of letting a still-longer warning push it past
+   the viewport. */
+.pm-warn-dialog {
+  max-width: min(34rem, 92vw); width: 100%; margin: auto;
+  border: 1px solid var(--rule); border-radius: 3px; padding: 0;
+  background: var(--paper-2); color: var(--ink);
+}
+.pm-warn-dialog::backdrop { background: rgba(0, 0, 0, 0.45); }
+.pm-warn-dialog-head {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 0.8rem; padding: 0.8rem 1rem; border-bottom: 1px solid var(--rule);
+}
+.pm-warn-dialog-head h2 {
+  margin: 0; font-family: var(--sans); font-size: 12px; font-weight: 700;
+  letter-spacing: 0.06em; word-break: break-word;
+}
+.pm-warn-dialog-close {
+  background: none; border: 0; padding: 0 0.2rem; color: var(--ink-2);
+  font-size: 1.3rem; line-height: 1; cursor: pointer;
+}
+.pm-warn-dialog-close:hover { color: var(--ink); }
+.pm-warn-dialog-body {
+  margin: 0; padding: 0.9rem 1rem; font-family: var(--mono); font-size: 12px;
+  white-space: pre-wrap; overflow-wrap: anywhere; max-height: 60vh; overflow-y: auto;
 }
 
 .pm-skipgroup summary {
@@ -495,5 +528,51 @@ LOG_JS = r"""
     if (!det || !det.classList || !det.classList.contains("pm-log") || !det.open) return;
     loadLog(det.querySelector("#pm-log-body"));
   }, true);
+})();
+"""
+
+# Opens/closes the single shared warning dialog (render.py's
+# _render_warning / _render_warning_dialog). The dialog itself is rendered
+# once, outside #pm-main, so POLL_JS's swap() (which only ever touches
+# #pm-main's innerHTML) structurally cannot destroy it -- unlike the log
+# panel (05cad93), there is no swap-timing window to get wrong here, so
+# there is nothing for this script to coordinate with POLL_JS about.
+#
+# The warning BUTTON, by contrast, lives inside #pm-main and is recreated
+# by every swap exactly like every other docket-row element -- so the click
+# listener below delegates on `document`, which a swap never touches,
+# rather than binding to any specific button. Unlike the log panel's
+# "toggle" event, "click" bubbles normally, so a plain bubble-phase listener
+# (no capture needed) still sees it fire on whichever `.pm-warn` button is
+# live in the DOM at click time.
+WARN_JS = r"""
+(function () {
+  var dialog = document.getElementById("pm-warn-dialog");
+  if (!dialog) return;
+  var titleEl = document.getElementById("pm-warn-dialog-title");
+  var bodyEl = document.getElementById("pm-warn-dialog-body");
+
+  document.addEventListener("click", function (e) {
+    var btn = e.target.closest && e.target.closest(".pm-warn");
+    if (btn) {
+      titleEl.textContent = btn.getAttribute("data-warning-name") || "Warning";
+      // textContent, not innerHTML -- the full warning is untrusted R
+      // output and must never be interpreted as markup.
+      bodyEl.textContent = btn.getAttribute("data-warning-full") || "";
+      dialog.showModal();
+      return;
+    }
+    if (e.target.hasAttribute && e.target.hasAttribute("data-warn-close")) {
+      dialog.close();
+    }
+  });
+
+  // A native <dialog>'s click target IS the <dialog> element itself when the
+  // click lands outside its content box (the ::backdrop pseudo-element is
+  // not directly targetable) -- so this only fires for a genuine backdrop
+  // click, never for a click inside the dialog's own content.
+  dialog.addEventListener("click", function (e) {
+    if (e.target === dialog) dialog.close();
+  });
 })();
 """

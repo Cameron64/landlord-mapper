@@ -26,12 +26,22 @@ import html as _html
 from datetime import datetime, timedelta
 
 from monitor import bars
-from monitor.styles import LOG_JS, PAGE_CSS, POLL_JS, THEME_JS
+from monitor.styles import LOG_JS, PAGE_CSS, POLL_JS, THEME_JS, WARN_JS
 
 # Target names share long prefixes (…_merged, …_merged_owner,
 # …_merged_owner_clean) so a mid-string ellipsis would render three
 # different targets identically. Truncate from the head, keep the tail.
 NAME_TAIL_KEEP = 28
+
+# The inline warning affordance (glyph + aria-label + title) is bounded on
+# CHARACTER count, not lines -- R's warning text arrives from the box as one
+# unbroken line with no newlines at all (MEASURED: 2048 chars for pacs_data,
+# 550 for wcad_data_parsed, 275 for austin_parcel_data_merged_local, each a
+# single line), so a line-based bound like `splitlines()[0]` returns the
+# entire blob instead of a short excerpt. 72 sits in the middle of the
+# 60-90 char range that reads as "a fragment" without being so short it's
+# useless as a hint. See _render_warning.
+WARN_SUMMARY_CHARS = 72
 
 _STATE_LABELS = {
     "running": "Running",
@@ -173,6 +183,10 @@ def render_page(status):
         body.append(_render_legend())
     body.append(_render_log_panel())
     body.append('</main>')
+    # Outside #pm-main on purpose -- see _render_warning_dialog's docstring
+    # for why a swap-vulnerable dialog is the exact bug 05cad93 already fixed
+    # once, in a different element.
+    body.append(_render_warning_dialog())
 
     generated_at = status.get("generated_at")
     body.append('<span id="pm-generated-at" data-generated-at="%s" hidden></span>'
@@ -180,6 +194,7 @@ def render_page(status):
     body.append('<script>%s</script>' % THEME_JS)
     body.append('<script>%s</script>' % POLL_JS)
     body.append('<script>%s</script>' % LOG_JS)
+    body.append('<script>%s</script>' % WARN_JS)
 
     return (
         "<!doctype html>\n"
@@ -381,31 +396,86 @@ def _render_skip_group(group):
     )
 
 
+def _char_truncate(text, keep=WARN_SUMMARY_CHARS):
+    """Truncate on character count with an ellipsis. Never on lines -- see
+    WARN_SUMMARY_CHARS for why a line-based bound (the defect this
+    replaces) cannot work for this data."""
+    text = text or ""
+    if len(text) <= keep:
+        return text
+    return text[:keep].rstrip() + "…"
+
+
 def _render_warning(entry):
-    """The warning glyph, made to explain itself.
+    """The warning glyph, bounded regardless of how long the warning is.
 
-    `title="warning"` (the defect this replaces) told the reader nothing
-    beyond what the glyph already implied, and a `title` alone is invisible
-    on touch and to most screen readers -- it needs a hover that doesn't
-    exist on those devices. The fix reuses the disclosure pattern already on
-    this page (`_render_skip_group`, the log panel): a native `<details>`
-    that opens on tap, click, or Enter/Space when focused, and is exposed to
-    assistive tech as a real, labelled toggle rather than a tooltip. It also
-    picks up `data-key` for free, so an expanded warning survives a poll swap
-    the same way an expanded skip group already does (see POLL_JS's
-    openKeys()/restore()).
+    The previous fix (`warning_text.splitlines()[0]`) reused this page's
+    `<details>` disclosure pattern (skip groups, the log panel) and assumed
+    a warning's "first line" would be short. MEASURED against the live box,
+    it is not: R emits each warning as a single unbroken line -- 2048 chars
+    for pacs_data, with no newline anywhere in it -- so `splitlines()[0]`
+    returned the entire blob rather than an excerpt, and that full blob
+    both was the disclosure's collapsed `<summary>`/`title`/`aria-label`
+    text (inflating the docket row) and had nowhere to wrap inside a
+    `<details>` body sized for a short warning.
 
-    `title` is kept alongside as a same-tick bonus for mouse users, but it is
-    never the only way to reach the text.
+    Fix: bound the inline affordance -- summary glyph, aria-label, and
+    title alike -- on CHARACTER COUNT via `_char_truncate` (there is no
+    line structure to bound on), and move the FULL, unbounded text out of
+    the row entirely and into a `<dialog>` this button opens on click.
+    `<dialog>`/`showModal()` gives focus trapping, ESC-to-close, and a
+    backdrop for free -- worth preferring here over another `<details>`
+    because the body genuinely does not fit inline no matter how it wraps.
+
+    The full text rides on this button as `data-warning-full`, never as
+    visible text or as an unbounded `title` -- a data attribute has no
+    layout or native-tooltip cost no matter how long the value is. WARN_JS
+    (styles.py) reads it back out only at the moment the dialog opens, and
+    populates the ONE shared dialog rendered once per page by
+    `_render_warning_dialog` -- see that function for why the dialog itself
+    lives outside `#pm-main` rather than being rendered per-row here.
     """
     warning_text = entry.get("warning_text") or "warning (no detail recorded)"
-    first_line = warning_text.splitlines()[0]
+    summary = _char_truncate(warning_text)
     seq_key = entry.get("seq") if entry.get("seq") is not None else "x"
+    name = entry.get("name") or "this target"
     return (
-        ' <details class="pm-warn-disclosure" data-key="warn-%s">'
-        '<summary class="pm-warn" aria-label="warning: %s" title="%s">⚠</summary>'
-        '<div class="pm-warn-body pm-m">%s</div></details>'
-        % (_e(seq_key), _e(first_line), _e(first_line), _e(warning_text))
+        ' <button type="button" class="pm-warn" data-key="warn-%s" '
+        'data-warning-name="%s" data-warning-full="%s" '
+        'aria-haspopup="dialog" aria-label="warning: %s" title="%s">⚠</button>'
+        % (_e(seq_key), _e(name), _e(warning_text), _e(summary), _e(summary))
+    )
+
+
+def _render_warning_dialog():
+    """One shared `<dialog>` for every docket row's warning button, rendered
+    once per page and placed OUTSIDE `#pm-main` (see render_page).
+
+    `styles.py`'s POLL_JS `swap()` replaces `#pm-main`'s entire innerHTML
+    every ~3 seconds -- the exact mechanism that broke the log panel
+    (05cad93). A dialog that lived inside `#pm-main` would be destroyed
+    mid-read the instant a poll landed while a reader had it open, silently
+    closing the modal out from under them. Living outside `#pm-main`
+    (alongside the `pm-generated-at` span and the `<script>` tags, which
+    are already placed after `</main>` for the same reason -- nothing there
+    is meant to be swap-churned) means the swap structurally cannot reach
+    it: there is no timing window to get wrong, and no restore-after-swap
+    logic to write or to get wrong later.
+
+    Empty and closed by default; WARN_JS fills in the title/body and calls
+    `showModal()` only when a `.pm-warn` button is clicked, so this costs
+    nothing on a page with no warnings at all.
+    """
+    return (
+        '<dialog id="pm-warn-dialog" class="pm-warn-dialog" '
+        'aria-labelledby="pm-warn-dialog-title">'
+        '<div class="pm-warn-dialog-head">'
+        '<h2 id="pm-warn-dialog-title"></h2>'
+        '<button type="button" class="pm-warn-dialog-close" data-warn-close '
+        'aria-label="Close">&times;</button>'
+        '</div>'
+        '<div id="pm-warn-dialog-body" class="pm-warn-dialog-body"></div>'
+        '</dialog>'
     )
 
 
@@ -652,7 +722,8 @@ def _render_legend():
     """
     return (
         '<p class="pm-legend pm-m">Key: '
-        '<span class="pm-warn">⚠</span> has a warning, tap to read &nbsp;·&nbsp; '
+        '<span class="pm-warn">⚠</span> has a warning, tap to open the full text '
+        '&nbsp;·&nbsp; '
         '&hellip; name shortened, full name on hover or tap &nbsp;·&nbsp; '
         '&mdash; not known yet'
         '</p>'

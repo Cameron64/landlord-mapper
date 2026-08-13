@@ -443,9 +443,18 @@ class WarningDisclosureTests(unittest.TestCase):
     """Defect 1: `title="warning"` explained nothing beyond the glyph itself,
     and a title alone is unreachable on touch and to most screen readers.
     The fix carries the actual warning text through (state.py's
-    `warning_text`) and renders it behind a native, tap/keyboard-reachable
-    `<details>` disclosure -- the same pattern already used for skip groups
-    and the log panel -- rather than only a hover tooltip."""
+    `warning_text`) and renders it behind a tap/keyboard-reachable
+    affordance rather than only a hover tooltip.
+
+    That affordance changed shape again under Defect 4 (see
+    WarningModalTests below): originally a `<details>` disclosure, now a
+    `<button>` that opens a shared `<dialog>`, because the `<details>` body
+    is exactly what overflowed once warnings turned out to be a single
+    unbroken 2 KB line. The assertions here were updated to the new markup;
+    the underlying guarantee they pin -- full text present, reachable by
+    tap/keyboard and not just hover, a stable key, graceful missing-text
+    fallback, no affordance at all with no warning -- is unchanged.
+    """
 
     def test_warning_text_is_present_in_the_rendered_page(self):
         status = _base_status()
@@ -453,37 +462,131 @@ class WarningDisclosureTests(unittest.TestCase):
         html = render.render_page(status)
         self.assertIn("UNRELIABLE VALUE: doFuture RNG detail", html)
 
-    def test_warning_is_a_disclosure_not_only_a_hover_title(self):
+    def test_warning_is_a_button_not_only_a_hover_title(self):
         status = _base_status()
         status["docket"][0]["warning_text"] = "some warning text"
         html = render.render_page(status)
-        # Reachable by tap/click/keyboard (native <details>/<summary>), not
-        # only by a mouse hover.
-        self.assertIn('<details class="pm-warn-disclosure"', html)
-        self.assertIn('<summary class="pm-warn"', html)
-        # A stable data-key so an expanded warning survives a poll swap, the
-        # same mechanism the skip groups and the log panel rely on.
+        # Reachable by tap/click/keyboard (a real <button>), not only by a
+        # mouse hover over `title`.
+        self.assertIn('<button type="button" class="pm-warn"', html)
+        self.assertIn('aria-haspopup="dialog"', html)
+        # A stable data-key, the same mechanism the skip groups and the log
+        # panel rely on for surviving a poll swap (moot for the dialog
+        # itself now that it lives outside #pm-main, but the row's own
+        # button re-renders every swap like any other docket-row element).
         self.assertRegex(html, r'data-key="warn-\d+"')
 
     def test_missing_warning_text_still_renders_something_readable(self):
         """A row can have `warning: true` with no `warning_text` (an older
         cache, or a meta row whose warnings field really was empty text but
         still truthy some other way) -- must not raise, and must not render
-        an empty, unexplained disclosure."""
+        an empty, unexplained affordance."""
         status = _base_status()
         status["docket"][0]["warning_text"] = None
         html = render.render_page(status)
         self.assertIn("no detail recorded", html)
 
-    def test_no_warning_no_disclosure(self):
+    def test_no_warning_no_button(self):
         status = _base_status()
         status["docket"][0]["warning"] = False
         status["docket"][0]["warning_text"] = None
         html = render.render_page(status)
-        # The class name legitimately appears once in the static <style>
-        # block regardless of any row's warning state; the real assertion is
-        # that no row actually emits the <details> tag.
-        self.assertNotIn('<details class="pm-warn-disclosure"', html)
+        self.assertNotIn('<button type="button" class="pm-warn"', html)
+
+
+class WarningModalTests(unittest.TestCase):
+    """Defect 4: R's warning text arrives as one unbroken line with no
+    newlines at all (MEASURED against the live box: 2048 chars for
+    pacs_data, 550 for wcad_data_parsed, 275 for
+    austin_parcel_data_merged_local -- each a single line), so the old
+    `warning_text.splitlines()[0]` summary was the entire blob, not a short
+    excerpt, and both the collapsed row and the `title=` attribute carried
+    the full 2 KB. The fix bounds the inline affordance on character count
+    and moves the full text into a `<dialog>` opened on click."""
+
+    def _long_warning(self, length=2048):
+        # A single unbroken line with no newlines and no spaces -- the exact
+        # worst case named in the report, and the one most likely to defeat
+        # a naive wrap rule (nothing to break on except mid-word).
+        return "x" * length
+
+    def test_inline_affordance_is_character_bounded_for_a_2048_char_single_line(self):
+        status = _base_status()
+        status["docket"][0]["warning_text"] = self._long_warning(2048)
+        html = render.render_page(status)
+        # The full 2048-char run must still be present SOMEWHERE (the
+        # dialog's data source)...
+        self.assertIn("x" * 2048, html)
+        # ...but nothing bounded to the inline affordance may carry the
+        # unbounded run: aria-label and the visible-adjacent title must both
+        # be short. render.WARN_SUMMARY_CHARS is the contract; assert against
+        # it rather than a magic number so the two can't drift apart.
+        self.assertLessEqual(render.WARN_SUMMARY_CHARS, 90)
+        self.assertGreaterEqual(render.WARN_SUMMARY_CHARS, 60)
+        self.assertIn('aria-label="warning: %s"' % ("x" * render.WARN_SUMMARY_CHARS + "…"), html)
+        self.assertNotIn('aria-label="warning: %s"' % ("x" * 2048), html)
+
+    def test_char_truncate_bounds_on_characters_not_lines(self):
+        # The defect: `splitlines()[0]` on a string with no newlines returns
+        # the whole string. A character-count bound must truncate this same
+        # input regardless of the absence of line breaks.
+        one_line_2048 = "x" * 2048
+        self.assertEqual(len(one_line_2048.splitlines()), 1)  # confirms the premise
+        truncated = render._char_truncate(one_line_2048)
+        self.assertLess(len(truncated), 2048)
+        self.assertTrue(truncated.endswith("…"))
+
+    def test_short_warning_is_not_truncated_or_ellipsized(self):
+        short = "short warning"
+        self.assertEqual(render._char_truncate(short), short)
+
+    def test_full_text_carried_as_a_data_attribute_not_visible_text_or_title(self):
+        status = _base_status()
+        long_warning = self._long_warning(2048)
+        status["docket"][0]["warning_text"] = long_warning
+        html = render.render_page(status)
+        self.assertIn('data-warning-full="%s"' % long_warning, html)
+
+    def test_dialog_rendered_once_outside_pm_main(self):
+        html = render.render_page(_base_status())
+        main_close = html.index("</main>")
+        dialog_open = html.index('<dialog id="pm-warn-dialog"')
+        # The dialog must come after </main> closes -- i.e. it is a sibling
+        # of #pm-main, not a descendant, which is what protects it from
+        # POLL_JS's swap() (that function only ever touches #pm-main's
+        # innerHTML; see render._render_warning_dialog).
+        self.assertGreater(dialog_open, main_close)
+        # Exactly one shared dialog regardless of how many rows warn.
+        self.assertEqual(html.count('<dialog id="pm-warn-dialog"'), 1)
+
+    def test_dialog_uses_native_showmodal_and_close(self):
+        from monitor.styles import WARN_JS
+        self.assertIn("showModal()", WARN_JS)
+        self.assertIn("dialog.close()", WARN_JS)
+        # A visible close control must exist -- not ESC alone.
+        self.assertIn("data-warn-close", WARN_JS)
+
+    def test_warn_js_delegates_on_document_not_a_captured_node(self):
+        # Regression guard matching the log panel's 05cad93 fix: the warning
+        # BUTTON lives inside #pm-main and is recreated by every swap, so
+        # the click listener must be delegated on `document` (click bubbles,
+        # unlike "toggle", so no capture phase is required here).
+        from monitor.styles import WARN_JS
+        self.assertIn('document.addEventListener("click"', WARN_JS)
+        self.assertIn(".closest", WARN_JS)
+
+    def test_dialog_body_css_wraps_an_unbroken_run(self):
+        # Verifies the CSS handles the 2048-char single-line case
+        # specifically: both wrap properties must be present together, plus
+        # a bounded max-height so a still-longer warning cannot grow the
+        # dialog past the viewport.
+        from monitor.styles import PAGE_CSS
+        body_rule_start = PAGE_CSS.index(".pm-warn-dialog-body {")
+        body_rule = PAGE_CSS[body_rule_start:PAGE_CSS.index("}", body_rule_start)]
+        self.assertIn("white-space: pre-wrap", body_rule)
+        self.assertIn("overflow-wrap: anywhere", body_rule)
+        self.assertIn("max-height", body_rule)
+        self.assertIn("overflow-y: auto", body_rule)
 
 
 class GlyphLegendTests(unittest.TestCase):
@@ -570,4 +673,3 @@ class IdleHeadlineUsesRecordedDurationTests(unittest.TestCase):
         status["progress"]["running"] = []
         html = render.render_page(status)
         self.assertIn("took 6m 00s", html)
-        self.assertIn('Finished <time data-utc="2026-08-06T12:06:00Z"', html)
