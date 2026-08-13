@@ -909,10 +909,13 @@ NEIGH_MAX_OWNER_NAMES_PER_GATED_VALUE <- 20L
 # in that city, so it welds unrelated portfolios together -- which is the exact
 # failure the hub cap and the corroboration rule above were added to contain.
 #
-# WHY a predicate and not a blocklist: measured on the 2026-08-12 store there
-# are 1,501 distinct city-only and 249 distinct location-free values spread
-# over five columns. Enumerating those by hand is a list that is wrong the day
-# the next extract lands.
+# WHY a predicate and not a blocklist: measured on the 2026-08-12 store, pooled
+# over all five owner-side address columns, there are 1,297 distinct city-only
+# and 272 distinct location-free values, covering 10,107 and 6,114 parcels.
+# Enumerating those by hand is a list that is wrong the day the next extract
+# lands. The blocklist already in the tree demonstrates the point: of its 24
+# city_only rows the shipped nchar > NEIGH_ADDR_MIN_CHARS gate already excludes
+# 22, and the remaining 2 are real PO boxes that the row would wrongly blank.
 #
 # WHAT THE OLD TRIAGE SCAN GOT WRONG, since it is the reason this is a real
 # function and not a one-line grepl. That scan was
