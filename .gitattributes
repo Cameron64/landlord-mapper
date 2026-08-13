@@ -1,0 +1,5 @@
+# Shell scripts must check out with LF even on Windows. entrypoint.sh runs as
+# the container's ENTRYPOINT; with CRLF the kernel reads the shebang as
+# "/usr/bin/env bash\r" and the container dies at start with a confusing
+# "no such file or directory" that names a program that plainly exists.
+*.sh text eol=lf
