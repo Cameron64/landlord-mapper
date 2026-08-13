@@ -277,7 +277,252 @@ agent_string_sub = function(result_string, string_list){
          })
   result_string
 }
-#"CORPORATION SERVICE COMPANY D/B/A CSC-LAWYERS INCO"  
+
+# ---------------------------------------------------------------------------
+# blocklist.csv -- the owner/agent scrub list held as DATA rather than as
+# literals in this file.
+#
+# WHY: the two literal vectors that used to live inside reg_agent_string_gen
+# (misc_name_string, misc_add_string) were the only place a
+# "this value is not a real owner or a real location" judgement was recorded.
+# That made every such judgement a code edit, invisible to anyone reading the
+# data, un-reviewable, and impossible to stage: a candidate could not be parked
+# for review without either shipping it or losing it. blocklist.csv carries the
+# same patterns plus the provenance (`source`), the evidence (`n_owner_names`),
+# the reason (`category`, `notes`) and -- the load-bearing part -- a `status`
+# column, so a row can exist without being applied.
+#
+# THE SEMANTIC THAT MUST NOT BE LOST. agent_string_sub applies a pattern as
+# gsub(pattern, '', x): SUBSTRING REMOVAL. A pattern intended to void a whole
+# value has to be anchored ^...$ or it leaves the rest of the value behind and
+# the row silently becomes a substring rule instead. The `action` column records
+# which of the two a row is, and blocklist_read() REFUSES to load a
+# `blank_value` row that is not anchored, because that mistake is invisible in
+# the output -- the pipeline would still run and would still produce plausible
+# addresses.
+#
+# Only status == "active" rows are ever applied. `review` rows are carried so
+# the reasoning survives, and are inert by construction.
+#
+# FAILING LOUD IS THE POINT. A missing or malformed file raises. It must never
+# degrade to an empty blocklist, because an empty blocklist is
+# indistinguishable, in every downstream artefact, from the file being applied
+# and simply matching nothing -- i.e. the feature would look wired up while
+# doing nothing at all.
+# ---------------------------------------------------------------------------
+
+BLOCKLIST_FILE <- 'blocklist.csv'
+
+# Repo data files are read by bare relative name against the pipeline's working
+# directory (see link_used.csv, pac_cols.txt, the .xlsx layouts). That is kept
+# as the primary lookup; the container WORKDIR is tried next so the file still
+# resolves if something has chdir'd, and the env var exists so a verification
+# script can point at a checkout without copying the file around.
+BLOCKLIST_PATH_CANDIDATES <- c(BLOCKLIST_FILE,
+                               file.path('/landlord_mapper_etl',
+                                         BLOCKLIST_FILE))
+
+BLOCKLIST_COLUMNS <- c('pattern',
+                       'target',
+                       'action',
+                       'category',
+                       'status',
+                       'n_owner_names',
+                       'source',
+                       'notes')
+
+BLOCKLIST_TARGETS  <- c('address', 'name')
+BLOCKLIST_ACTIONS  <- c('remove_substring', 'blank_value')
+BLOCKLIST_STATUSES <- c('active', 'review')
+BLOCKLIST_APPLIED_STATUS <- 'active'
+
+blocklist_path = function(path = NULL){
+  if (!is.null(path)) {
+    if (!file.exists(path)) {
+      stop('blocklist: file not found at the explicitly supplied path: ', path)
+    }
+    return(path)
+  }
+  override <- Sys.getenv('LM_BLOCKLIST_PATH', unset = '')
+  if (nzchar(override)) {
+    if (!file.exists(override)) {
+      stop('blocklist: LM_BLOCKLIST_PATH is set to "', override,
+           '" but no such file exists. Unset it or fix it; refusing to fall ',
+           'back, because a typo there would silently disable the blocklist.')
+    }
+    return(override)
+  }
+  found <- BLOCKLIST_PATH_CANDIDATES[file.exists(BLOCKLIST_PATH_CANDIDATES)]
+  if (!length(found)) {
+    stop('blocklist: ', BLOCKLIST_FILE, ' not found. Tried: ',
+         paste(BLOCKLIST_PATH_CANDIDATES, collapse = ', '),
+         ' (working directory is ', getwd(),
+         '). The file must ship with the code -- check the Dockerfile COPY ',
+         'lines. Refusing to continue with no blocklist.')
+  }
+  found[[1]]
+}
+
+# Read + validate. Returns the full frame, review rows included; filtering to
+# the applied status happens in blocklist_strings so that a caller auditing the
+# file can still see everything.
+#
+# colClasses = 'character' is load bearing twice over: it stops read.csv turning
+# the pattern "00000" into the number 0, and it stops an empty n_owner_names
+# cell becoming NA and then poisoning a comparison.
+blocklist_read = function(path = NULL){
+  path <- blocklist_path(path)
+
+  raw <- tryCatch(utils::read.csv(path,
+                                  colClasses    = 'character',
+                                  na.strings    = character(0),
+                                  check.names   = FALSE,
+                                  stringsAsFactors = FALSE),
+                  error = function(e){
+                    stop('blocklist: could not parse ', path, ': ',
+                         conditionMessage(e))
+                  })
+
+  missing_cols <- setdiff(BLOCKLIST_COLUMNS, names(raw))
+  if (length(missing_cols)) {
+    stop('blocklist: ', path, ' is missing required column(s): ',
+         paste(missing_cols, collapse = ', '),
+         '. Expected schema: ', paste(BLOCKLIST_COLUMNS, collapse = ','))
+  }
+  if (!nrow(raw)) {
+    stop('blocklist: ', path, ' has a header but no rows.')
+  }
+
+  # Only the descriptive fields are trimmed. `pattern` is NOT: it is a regex
+  # that has to survive byte for byte, and leading/trailing whitespace can be
+  # deliberate inside a character class.
+  for (col in c('target', 'action', 'status', 'category')) {
+    raw[[col]] <- trimws(raw[[col]])
+  }
+
+  blank_pattern <- !nzchar(raw$pattern)
+  if (any(blank_pattern)) {
+    stop('blocklist: ', path, ' has empty pattern(s) on row(s) ',
+         paste(which(blank_pattern), collapse = ', '),
+         '. An empty pattern matches at every position and would delete ',
+         'nothing while looking like a rule.')
+  }
+
+  bad_target <- !(raw$target %in% BLOCKLIST_TARGETS)
+  if (any(bad_target)) {
+    stop('blocklist: ', path, ' has unknown target value(s) ',
+         paste(unique(raw$target[bad_target]), collapse = ', '),
+         ' on row(s) ', paste(which(bad_target), collapse = ', '),
+         '. Allowed: ', paste(BLOCKLIST_TARGETS, collapse = ', '))
+  }
+  bad_action <- !(raw$action %in% BLOCKLIST_ACTIONS)
+  if (any(bad_action)) {
+    stop('blocklist: ', path, ' has unknown action value(s) ',
+         paste(unique(raw$action[bad_action]), collapse = ', '),
+         ' on row(s) ', paste(which(bad_action), collapse = ', '),
+         '. Allowed: ', paste(BLOCKLIST_ACTIONS, collapse = ', '))
+  }
+  bad_status <- !(raw$status %in% BLOCKLIST_STATUSES)
+  if (any(bad_status)) {
+    stop('blocklist: ', path, ' has unknown status value(s) ',
+         paste(unique(raw$status[bad_status]), collapse = ', '),
+         ' on row(s) ', paste(which(bad_status), collapse = ', '),
+         '. Allowed: ', paste(BLOCKLIST_STATUSES, collapse = ', '),
+         '. An unrecognised status must not be guessed at -- guessing it ',
+         'active applies an unreviewed rule, guessing it inert loses one.')
+  }
+  bad_category <- !nzchar(raw$category)
+  if (any(bad_category)) {
+    stop('blocklist: ', path, ' has empty category on row(s) ',
+         paste(which(bad_category), collapse = ', '),
+         '. Category is what groups patterns into alternations.')
+  }
+
+  # The anchoring invariant. See the header note: an unanchored blank_value row
+  # is a silent downgrade to substring removal.
+  blank_rows <- raw$action == 'blank_value'
+  unanchored <- blank_rows &
+                !(startsWith(raw$pattern, '^') & endsWith(raw$pattern, '$'))
+  if (any(unanchored)) {
+    stop('blocklist: ', path, ' has blank_value row(s) ',
+         paste(which(unanchored), collapse = ', '),
+         ' whose pattern is not anchored ^...$: ',
+         paste(raw$pattern[unanchored], collapse = ' | '),
+         '. gsub() removes a substring, so an unanchored blank_value rule ',
+         'leaves a fragment of the value behind instead of voiding it.')
+  }
+  # A top-level alternation inside an anchored pattern breaks the anchoring the
+  # check above just verified ("^A|B$" anchors only A at the start and only B at
+  # the end), and the branches are about to be joined with '|' anyway.
+  piped_blank <- blank_rows & grepl('|', raw$pattern, fixed = TRUE)
+  if (any(piped_blank)) {
+    stop('blocklist: ', path, ' has blank_value row(s) ',
+         paste(which(piped_blank), collapse = ', '),
+         ' containing a literal "|". Split them into one row per branch; ',
+         'an alternation inside an anchored pattern is not anchored.')
+  }
+
+  uncompilable <- vapply(raw$pattern,
+                         function(p){
+                           inherits(tryCatch(grepl(p, ''),
+                                             error = function(e) e),
+                                    'error')
+                         },
+                         logical(1),
+                         USE.NAMES = FALSE)
+  if (any(uncompilable)) {
+    stop('blocklist: ', path, ' has row(s) ',
+         paste(which(uncompilable), collapse = ', '),
+         ' whose pattern is not a valid regex: ',
+         paste(raw$pattern[uncompilable], collapse = ' | '))
+  }
+
+  raw
+}
+
+# Active patterns, joined into one alternation per (target, category) and
+# returned in the shape agent_string_sub consumes: a list of regex strings, each
+# applied in turn with gsub(x, '').
+#
+# One element per category rather than one element per row so that a category
+# stays isolable -- that is what lets a verification script assert the
+# misc_name/misc_address elements are byte identical to the literals they
+# replaced. Category order is order of first appearance in the file, so
+# misc_address keeps the position the old misc_add_string held.
+blocklist_strings = function(path = NULL,
+                             blocklist = NULL){
+  if (is.null(blocklist)) blocklist <- blocklist_read(path)
+
+  applied <- blocklist[blocklist$status == BLOCKLIST_APPLIED_STATUS, ,
+                       drop = FALSE]
+  if (!nrow(applied)) {
+    stop('blocklist: no rows with status "', BLOCKLIST_APPLIED_STATUS,
+         '". Refusing to return an empty blocklist, which would be ',
+         'indistinguishable downstream from one that simply matched nothing.')
+  }
+
+  by_target <- lapply(stats::setNames(BLOCKLIST_TARGETS, BLOCKLIST_TARGETS),
+                      function(tgt){
+                        rows <- applied[applied$target == tgt, , drop = FALSE]
+                        if (!nrow(rows)) {
+                          stop('blocklist: no active rows for target "', tgt,
+                               '". Both targets carried patterns when this ',
+                               'file was wired in; losing one is a regression, ',
+                               'not a configuration.')
+                        }
+                        cats <- unique(rows$category)
+                        lapply(stats::setNames(cats, cats),
+                               function(cat_used){
+                                 paste(rows$pattern[rows$category == cat_used],
+                                       collapse = '|')
+                               })
+                      })
+
+  list(addresses = by_target[['address']],
+       names     = by_target[['name']])
+}
+
+#"CORPORATION SERVICE COMPANY D/B/A CSC-LAWYERS INCO"
 reg_agent_string_gen = function(data_used,
                                 cuts_used){
   registered_agent_inds <- which(c(grepl('RYAN LLC|ASSOC|CONSULT|COGENCY|REGISTER|(IN)?CORPORAT(E|ION)?|SERVICE|LAWYER|CSC|SOLUTION|AGENT|AGENC|LEGAL|BUSINESS|TAX|MAIL|POST|LAW|ADVIS',
@@ -333,42 +578,15 @@ reg_agent_string_gen = function(data_used,
                                                  collapse = '|')
                               })
   
-  misc_name_string <-list(paste(c('D3 REAL ESTATE CONSULTANTS',
-                                  'GILL, DENSON & COMPANY',
-                                  'L L CASEY & CO',
-                                  '^US$',
-                                  'KE ANDREWS',
-                                  'COMMERCIAL',
-                                  'UNAVAILABLE',
-                                  'FBO',
-                                  'EQUITY TRUST COMPANY',
-                                  'TAX EXEMPT',
-                                  'NONE',
-                                  '00000',
-                                  'UNKNOWN',
-                                  'OWNER',
-                                  'ADDRESS',
-                                  'CUSTODIAN',
-                                  'UNKNOWN CITY',
-                                  'UNKNOWN STATE',
-                                  'ZIP',
-                                  'PROPERTY TAX DEPARTMENT',
-                                  'ATTN',
-                                  'AVAILABLE UPON REQUEST',
-                                  'MICHEL ROGERS & MALONEY, PC'),
-                                collapse = '|'))
-  
-  misc_add_string <- list(paste(c('815 BRAZOS.+AUSTIN TX 78701',
-                                  '2595 DALLAS PKWY.+FRISCO TX 75034',
-                                  '401 TOM LANDRY HWY.+DALLAS TX 75266',
-                                  'PO BOX 4090 SCOTTSDALE AZ 85261',
-                                  'PO BOX 592226 SAN ANTONIO TX 78259',
-                                  '901.+MOPAC.+AUSTIN TX 78746',
-                                  '901.+MO PAC.+AUSTIN TX 78746',
-                                  '3225 MCLEOD DR.+LAS VEGAS NV 89121',
-                                  '17350 STATE H.+HOUSTON TX 77064'),
-                                collapse = '|'))
-  
+  # Was two hardcoded literal vectors here. They now live in blocklist.csv,
+  # categories misc_name and misc_address, alongside the patterns that could
+  # never be added while this was source code. blocklist_strings() raises rather
+  # than returning nothing, so a missing or malformed file stops the run instead
+  # of quietly producing an unscrubbed extract.
+  blocklist_used   <- blocklist_strings()
+  misc_add_string  <- blocklist_used$addresses
+  misc_name_string <- blocklist_used$names
+
   return( list(addresses = c(registered_agent_add_string,
                            agent_add_string,
                            misc_add_string),
