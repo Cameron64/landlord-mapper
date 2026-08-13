@@ -166,6 +166,11 @@ def render_page(status):
         if freshness_panel:
             body.append(freshness_panel)
 
+    # Only worth explaining the docket's glyphs when there is a docket to
+    # read them in -- an idle/empty/unknown page with no rows has nothing
+    # for the legend to gloss.
+    if status.get("docket"):
+        body.append(_render_legend())
     body.append(_render_log_panel())
     body.append('</main>')
 
@@ -376,6 +381,34 @@ def _render_skip_group(group):
     )
 
 
+def _render_warning(entry):
+    """The warning glyph, made to explain itself.
+
+    `title="warning"` (the defect this replaces) told the reader nothing
+    beyond what the glyph already implied, and a `title` alone is invisible
+    on touch and to most screen readers -- it needs a hover that doesn't
+    exist on those devices. The fix reuses the disclosure pattern already on
+    this page (`_render_skip_group`, the log panel): a native `<details>`
+    that opens on tap, click, or Enter/Space when focused, and is exposed to
+    assistive tech as a real, labelled toggle rather than a tooltip. It also
+    picks up `data-key` for free, so an expanded warning survives a poll swap
+    the same way an expanded skip group already does (see POLL_JS's
+    openKeys()/restore()).
+
+    `title` is kept alongside as a same-tick bonus for mouse users, but it is
+    never the only way to reach the text.
+    """
+    warning_text = entry.get("warning_text") or "warning (no detail recorded)"
+    first_line = warning_text.splitlines()[0]
+    seq_key = entry.get("seq") if entry.get("seq") is not None else "x"
+    return (
+        ' <details class="pm-warn-disclosure" data-key="warn-%s">'
+        '<summary class="pm-warn" aria-label="warning: %s" title="%s">⚠</summary>'
+        '<div class="pm-warn-body pm-m">%s</div></details>'
+        % (_e(seq_key), _e(first_line), _e(first_line), _e(warning_text))
+    )
+
+
 def _render_row(entry, axis_max, generated_at):
     seq = entry.get("seq")
     name = entry.get("name") or ""
@@ -408,7 +441,7 @@ def _render_row(entry, axis_max, generated_at):
     if state == "dispatched":
         dur_text = "running " + dur_text
 
-    warn_html = ' <span class="pm-warn" title="warning">⚠</span>' if entry.get("warning") else ""
+    warn_html = _render_warning(entry) if entry.get("warning") else ""
 
     prior = entry.get("seconds_prior")
     ghost_line = ""
@@ -592,4 +625,28 @@ def _render_log_panel():
         '<details class="pm-log"><summary>Log · last 40 lines</summary>'
         '<pre id="pm-log-body" data-loaded="false">Expand to load the tail of '
         'docker logs lm-pipeline.</pre></details>'
+    )
+
+
+def _render_legend():
+    """A compact, always-visible key for the page's non-ASCII glyphs.
+
+    Audited every one `render.py` emits: `⚠` (now self-explaining per-row,
+    see `_render_warning`, but the glyph alone still means nothing to a
+    first-time reader), the head-truncation `…` (already carries the full
+    name in `title`, but nothing on the page says truncation is happening at
+    all), and the placeholder `—`/`&mdash;` used wherever a value is simply
+    not known yet (`bars.format_duration_short`, `_fmt_int`, `_clock_html`).
+    The docket's `·` separators and `–` range dash (skip-group headers,
+    scrape summary) are left unglossed on purpose -- they sit in running
+    prose next to the words they separate ("· skipped", "01–19 · 19 entries
+    skipped") and are self-evident from that context; explaining a plain
+    separator would be the glyph-legend equivalent of a filler word.
+    """
+    return (
+        '<p class="pm-legend pm-m">Key: '
+        '<span class="pm-warn">⚠</span> has a warning, tap to read &nbsp;·&nbsp; '
+        '&hellip; name shortened, full name on hover or tap &nbsp;·&nbsp; '
+        '&mdash; not known yet'
+        '</p>'
     )

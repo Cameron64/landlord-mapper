@@ -259,6 +259,38 @@ class FailurePathTests(unittest.TestCase):
         self.assertTrue(docket_by_name["a"]["warning"])
         self.assertEqual(status["problems"], [{"level": "warning", "target": "a", "message": "doFuture RNG warning"}])
 
+    def test_warning_text_carries_the_full_message_alongside_the_bool(self):
+        """Defect 1's root cause: state.py used to do `bool(warning_text)`
+        and throw the text itself away, even though `error_text` right below
+        it was kept in full. `warning_text` now mirrors `error`'s shape."""
+        created = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        progress = _progress_text([("a", "dispatched"), ("a", "completed")])
+        meta = _meta_text([
+            _meta_row("a", created + timedelta(seconds=5), 5.0,
+                      warnings="UNRELIABLE VALUE: doFuture RNG detail"),
+        ])
+        probe = FakeProbe(
+            reachable=True, container=RUNNING, progress=progress, meta=meta,
+            process=_process_text(created),
+        )
+        status = state.build_status(probe, created + timedelta(minutes=1))
+        docket_by_name = {d["name"]: d for d in status["docket"]}
+        self.assertTrue(docket_by_name["a"]["warning"])
+        self.assertEqual(docket_by_name["a"]["warning_text"], "UNRELIABLE VALUE: doFuture RNG detail")
+
+    def test_warning_text_is_null_when_there_is_no_warning(self):
+        created = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        progress = _progress_text([("a", "dispatched"), ("a", "completed")])
+        meta = _meta_text([_meta_row("a", created + timedelta(seconds=5), 5.0)])
+        probe = FakeProbe(
+            reachable=True, container=RUNNING, progress=progress, meta=meta,
+            process=_process_text(created),
+        )
+        status = state.build_status(probe, created + timedelta(minutes=1))
+        docket_by_name = {d["name"]: d for d in status["docket"]}
+        self.assertFalse(docket_by_name["a"]["warning"])
+        self.assertIsNone(docket_by_name["a"]["warning_text"])
+
 
 class ProgressFractionAndEtaTests(unittest.TestCase):
     """PLAN.md §5, with numbers chosen so the expected fraction/ETA can be

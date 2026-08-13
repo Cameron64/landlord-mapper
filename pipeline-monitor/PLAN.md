@@ -296,6 +296,11 @@ only.
       "started_at": "2026-08-06T12:00:04Z",
       "finished_at": "2026-08-06T12:19:07Z",
       "warning": true,            // meta.warnings non-empty
+      "warning_text": "UNRELIABLE VALUE: ... doFuture ... random numbers ...",
+                                   // the full text `warning` only booleans away; null iff warning is false.
+                                   // Added post-launch: the page rendered `warning` as a glyph with
+                                   // `title="warning"`, which explained nothing beyond the glyph itself.
+                                   // Mirrors `error`'s existing shape rather than inventing a new one.
       "error": null
     }
   ],

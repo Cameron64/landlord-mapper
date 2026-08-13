@@ -436,3 +436,73 @@ class DownloadButtonTests(unittest.TestCase):
         st["freshness"] = []
         html = render.render_page(st)
         self.assertNotIn('href="/download/data.zip"', html)
+
+
+class WarningDisclosureTests(unittest.TestCase):
+    """Defect 1: `title="warning"` explained nothing beyond the glyph itself,
+    and a title alone is unreachable on touch and to most screen readers.
+    The fix carries the actual warning text through (state.py's
+    `warning_text`) and renders it behind a native, tap/keyboard-reachable
+    `<details>` disclosure -- the same pattern already used for skip groups
+    and the log panel -- rather than only a hover tooltip."""
+
+    def test_warning_text_is_present_in_the_rendered_page(self):
+        status = _base_status()
+        status["docket"][0]["warning_text"] = "UNRELIABLE VALUE: doFuture RNG detail"
+        html = render.render_page(status)
+        self.assertIn("UNRELIABLE VALUE: doFuture RNG detail", html)
+
+    def test_warning_is_a_disclosure_not_only_a_hover_title(self):
+        status = _base_status()
+        status["docket"][0]["warning_text"] = "some warning text"
+        html = render.render_page(status)
+        # Reachable by tap/click/keyboard (native <details>/<summary>), not
+        # only by a mouse hover.
+        self.assertIn('<details class="pm-warn-disclosure"', html)
+        self.assertIn('<summary class="pm-warn"', html)
+        # A stable data-key so an expanded warning survives a poll swap, the
+        # same mechanism the skip groups and the log panel rely on.
+        self.assertRegex(html, r'data-key="warn-\d+"')
+
+    def test_missing_warning_text_still_renders_something_readable(self):
+        """A row can have `warning: true` with no `warning_text` (an older
+        cache, or a meta row whose warnings field really was empty text but
+        still truthy some other way) -- must not raise, and must not render
+        an empty, unexplained disclosure."""
+        status = _base_status()
+        status["docket"][0]["warning_text"] = None
+        html = render.render_page(status)
+        self.assertIn("no detail recorded", html)
+
+    def test_no_warning_no_disclosure(self):
+        status = _base_status()
+        status["docket"][0]["warning"] = False
+        status["docket"][0]["warning_text"] = None
+        html = render.render_page(status)
+        # The class name legitimately appears once in the static <style>
+        # block regardless of any row's warning state; the real assertion is
+        # that no row actually emits the <details> tag.
+        self.assertNotIn('<details class="pm-warn-disclosure"', html)
+
+
+class GlyphLegendTests(unittest.TestCase):
+    """The user's separate ask: every non-ASCII glyph the page emits should
+    be explainable without reading source. Rather than a per-glyph
+    explanation bolted onto every occurrence (which would bloat the docket),
+    a single compact legend covers the ones that are not already
+    self-evident from context."""
+
+    def test_legend_present_when_docket_has_rows(self):
+        html = render.render_page(_base_status())
+        self.assertIn('<p class="pm-legend pm-m">', html)
+        self.assertIn("has a warning", html)
+        self.assertIn("name shortened", html)
+        self.assertIn("not known yet", html)
+
+    def test_legend_absent_when_docket_is_empty(self):
+        status = _base_status()
+        status["docket"] = []
+        status["run"]["state"] = "idle"
+        status["progress"]["running"] = []
+        html = render.render_page(status)
+        self.assertNotIn('<p class="pm-legend pm-m">', html)

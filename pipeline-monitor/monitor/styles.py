@@ -173,6 +173,18 @@ img, svg, table { max-width: 100%; }
 }
 .pm-row .pm-warn { color: var(--ochre); margin-left: 0.3rem; }
 
+/* the warning glyph is a <summary> inside a <details> now, not bare text --
+   tap/click/keyboard-Enter reveals the actual warning text below, so the
+   glyph is never the only way to reach it (title= alone is invisible on
+   touch and to most screen readers). */
+.pm-warn-disclosure { display: inline-block; }
+.pm-warn-disclosure summary { cursor: pointer; list-style: none; }
+.pm-warn-disclosure summary::-webkit-details-marker { display: none; }
+.pm-warn-body {
+  display: block; margin-top: 0.3rem; max-width: 34rem;
+  font-size: 11px; color: var(--ink-2); white-space: pre-wrap; word-break: break-word;
+}
+
 .pm-skipgroup summary {
   font-family: var(--mono); font-size: 12px; color: var(--ink-2); cursor: pointer;
   padding-block: 0.45rem; border-top: 1px solid var(--rule); list-style: none;
@@ -262,6 +274,10 @@ img, svg, table { max-width: 100%; }
 .pm-fresh-list .pm-fresh-name { color: var(--ink); min-width: 0; word-break: break-word; }
 .pm-fresh-list .pm-fresh-meta { color: var(--ink-2); white-space: nowrap; }
 .pm-fresh-list .pm-fresh-missing .pm-fresh-name { color: var(--ink-2); }
+
+/* -- glyph legend -- */
+.pm-legend { margin: 0.9rem 0 0; color: var(--ink-2); font-size: 11px; }
+.pm-legend .pm-warn { margin: 0 0.1em; }
 
 /* -- log -- */
 .pm-log { padding-block: 1rem; }

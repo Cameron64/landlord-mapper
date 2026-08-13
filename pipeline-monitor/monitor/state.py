@@ -232,6 +232,12 @@ def _build_docket(combined_order, latest, runs):
             "started_at": _iso(started_at),
             "finished_at": _iso(finished_at),
             "warning": bool(warning_text),
+            # The boolean above is kept for existing consumers (the contract
+            # promised it and other renderers may already key off it), but a
+            # bare bool discarded the one thing worth reading -- what the
+            # warning actually says. `error` already kept the full text right
+            # next to it; this brings `warning` to the same standard.
+            "warning_text": warning_text,
             "error": error_text,
             # Internal only -- used by ETA math below, never serialized.
             "_finished_at_dt": finished_at,
