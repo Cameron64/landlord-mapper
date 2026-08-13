@@ -15,7 +15,7 @@ import unittest
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from monitor import bars, render  # noqa: E402
-from monitor.styles import LOG_JS  # noqa: E402
+from monitor.styles import LOG_JS, POLL_JS  # noqa: E402
 
 
 def _base_status(**overrides):
@@ -673,3 +673,107 @@ class IdleHeadlineUsesRecordedDurationTests(unittest.TestCase):
         status["progress"]["running"] = []
         html = render.render_page(status)
         self.assertIn("took 6m 00s", html)
+
+
+class HeadlineDateMarkerTests(unittest.TestCase):
+    """Defect 5: the idle headline ("Finished 17:35:10, took ...") carried
+    no date, so a reader could not tell today's finish from last week's.
+    The fix is entirely client-side (styles.py's localize(), which already
+    owns all <time> formatting) plus one opt-in marker render.py sets on
+    exactly the headline's own clock -- render.py itself does no date math
+    and reads no clock, matching this module's existing "no wall-clock math
+    on the server" discipline.
+
+    This class pins render.py's half of the contract: the marker is present
+    on the idle headline's <time> and ABSENT from every other <time> the
+    page emits (docket rows, scrape/freshness rows, and the running/failed
+    headline's own "Started" row) -- the scoping the task called out
+    explicitly, since a repeated date on every row would be noise inside a
+    single run's page. styles.py's day-phrasing logic itself is pinned in
+    HeadlineDateFormattingJSTests below (structural, since these tests run
+    under plain unittest with no JS engine)."""
+
+    def test_idle_headline_time_carries_the_headline_marker(self):
+        status = _base_status()
+        status["run"] = {
+            "state": "idle", "pid": None,
+            "started_at": "2026-08-06T12:00:00Z",
+            "elapsed_seconds": 360,
+            "targets_version": "1.11.4", "r_version": "4.5.2",
+            "container": {"name": "lm-pipeline", "up": False, "started_at": None},
+        }
+        status["progress"]["running"] = []
+        html = render.render_page(status)
+        self.assertIn('data-format="headline"', html)
+        # The exact ISO instant must still be present -- localize() keeps it
+        # in `title` regardless of which text is displayed.
+        self.assertIn('data-utc="2026-08-06T12:06:00Z"', html)
+
+    def test_no_other_time_element_carries_the_headline_marker(self):
+        # test_running's status has <time> elements in the headline's
+        # "Started" row, a docket row's implicit timing, and the freshness
+        # panel -- none of those are the idle "Finished ..." headline, so
+        # none should opt in to date phrasing. Checked against the actual
+        # <time ...> TAGS specifically (via regex), not a whole-page
+        # substring search -- WARN_JS's own explanatory comment later in the
+        # page legitimately quotes the attribute name in prose.
+        html = render.render_page(_base_status())
+        time_tags = re.findall(r"<time [^>]*>", html)
+        self.assertTrue(time_tags)  # sanity: there are <time> elements to check
+        self.assertFalse(any('data-format="headline"' in t for t in time_tags))
+
+    def test_unknown_state_has_no_headline_time_at_all(self):
+        # No started_at/elapsed_seconds means no finished_clock is computed,
+        # so there is nothing to mark -- must not raise.
+        status = _base_status()
+        status["run"] = {"state": "idle", "pid": None, "started_at": None,
+                          "elapsed_seconds": None, "targets_version": None,
+                          "r_version": None, "container": {}}
+        status["progress"]["running"] = []
+        html = render.render_page(status)
+        time_tags = re.findall(r"<time [^>]*>", html)
+        self.assertFalse(any('data-format="headline"' in t for t in time_tags))
+
+
+class HeadlineDateFormattingJSTests(unittest.TestCase):
+    """Defect 5, continued: pins the day-phrasing logic itself exists in
+    POLL_JS's localize() and branches on the marker HeadlineDateMarkerTests
+    verifies render.py sets. Structural (string-level), matching this
+    codebase's existing convention for JS behavior it cannot execute (see
+    LogPanelSurvivesSwapTests) -- the exact output strings for today /
+    yesterday / 8-days-ago were verified separately by running the
+    extracted algorithm under Node (today -> "today at 17:35:10", yesterday
+    -> "yesterday at 17:35:10", 8 days ago in the same year ->
+    "Aug 5 at 17:35:10")."""
+
+    def test_localize_branches_on_the_headline_marker(self):
+        self.assertIn('getAttribute("data-format") === "headline"', POLL_JS)
+
+    def test_relative_day_phrasing_present(self):
+        self.assertIn('"today"', POLL_JS)
+        self.assertIn('"yesterday"', POLL_JS)
+
+    def test_explicit_date_degrades_beyond_yesterday(self):
+        # Must fall back to a month-name/day form (not "N days ago") for
+        # anything older than yesterday, and must qualify with a year only
+        # when it differs from the current one.
+        self.assertIn("MONTH_NAMES", POLL_JS)
+        self.assertIn("getFullYear() !== now.getFullYear()", POLL_JS)
+
+    def test_title_still_carries_the_exact_iso_instant(self):
+        # The exact timestamp must stay available regardless of which text
+        # is displayed -- this is the one line that does that for every
+        # <time>, headline or not.
+        self.assertIn('setAttribute("title", iso)', POLL_JS)
+
+    def test_server_still_does_no_date_formatting(self):
+        # Formatting happens client-side in the reader's own timezone,
+        # deliberately -- render.py must not have grown a day-of-week/month
+        # name table of its own to pre-empt this. (render.py's own docstrings
+        # discuss the feature in prose, so this checks for the DATA -- a
+        # month-abbreviation table -- not for the English word "yesterday",
+        # which legitimately appears in comments.)
+        import inspect
+        src = inspect.getsource(render)
+        self.assertNotIn("MONTH_NAMES", src)
+        self.assertNotIn('"Jan", "Feb"', src)

@@ -395,11 +395,47 @@ THEME_JS = r"""
 # visible even between polls.
 POLL_JS = r"""
 (function () {
+  var MONTH_NAMES = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+  // Whole-calendar-day difference in the viewer's own zone (not a 24h/86400s
+  // divide, which would misclassify "yesterday, late" vs "today, early" by a
+  // few hours depending on the two clock-of-day values).
+  function dayDiff(d, now) {
+    var a = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    var b = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    return Math.round((b - a) / 86400000);
+  }
+
+  // Relative phrasing answers "which day" fastest for the two cases a reader
+  // actually asks about (today, yesterday); anything older degrades to an
+  // explicit date rather than "3 days ago" -- the reader would still have to
+  // do the subtraction themselves, so a date is no less readable and stays
+  // correct arbitrarily far back. Year is only shown when it isn't the
+  // current one, matching how a person would say the date out loud.
+  function headlineDay(d, now) {
+    var diff = dayDiff(d, now);
+    if (diff === 0) return "today";
+    if (diff === 1) return "yesterday";
+    var s = MONTH_NAMES[d.getMonth()] + " " + d.getDate();
+    if (d.getFullYear() !== now.getFullYear()) s += ", " + d.getFullYear();
+    return s;
+  }
+
   // Localize every <time data-utc> into the viewer's own zone. The server
   // renders UTC so the page is correct without scripting; this only improves
   // it. Run on load and after every swap.
+  //
+  // `data-format="headline"` is an opt-in marker render.py sets on exactly
+  // one <time> (the idle "Finished ..." headline) and nowhere else -- the
+  // docket rows and scrape/freshness rows all sit within a single run, where
+  // a bare clock is correct and a repeated date would be noise. Without a
+  // date at all, the headline could not tell today's finish from last
+  // week's, which was the reported bug: the reader had no way to know which
+  // day a "last run" result was even from.
   function localize(root) {
     var nodes = (root || document).querySelectorAll("time[data-utc]");
+    var now = new Date();
     for (var i = 0; i < nodes.length; i++) {
       var iso = nodes[i].getAttribute("data-utc");
       var d = new Date(iso);
@@ -407,7 +443,14 @@ POLL_JS = r"""
       var hh = String(d.getHours()).padStart(2, "0");
       var mm = String(d.getMinutes()).padStart(2, "0");
       var ss = String(d.getSeconds()).padStart(2, "0");
-      nodes[i].textContent = hh + ":" + mm + ":" + ss;
+      var clock = hh + ":" + mm + ":" + ss;
+      if (nodes[i].getAttribute("data-format") === "headline") {
+        nodes[i].textContent = headlineDay(d, now) + " at " + clock;
+      } else {
+        nodes[i].textContent = clock;
+      }
+      // The exact ISO instant stays reachable via hover/long-press
+      // regardless of which text is shown above.
       nodes[i].setAttribute("title", iso);
     }
   }

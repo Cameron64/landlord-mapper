@@ -108,11 +108,25 @@ def _clock_html(iso_ts):
     return '<time data-utc="%s">%s</time>' % (_e(str(iso_ts)), _e(_fmt_clock(iso_ts)))
 
 
-def _clock_html_dt(dt):
+def _clock_html_dt(dt, headline=False):
+    """As _clock_html, but built from an already-parsed datetime (the idle
+    headline computes `started_at + elapsed_seconds` itself rather than
+    parsing a wire timestamp -- see _render_headline).
+
+    `headline=True` adds `data-format="headline"`, an opt-in marker that
+    only the headline's own clock sets. `localize()` (styles.py) branches
+    on it to add a human-friendly day ("today"/"yesterday"/an explicit
+    date) in front of the time -- the reader otherwise has no way to tell
+    whether a last-run headline is reporting on today or last week. Every
+    other `<time>` this module emits (docket rows, scrape/freshness rows)
+    sits inside a single run's page and stays bare on purpose: a repeated
+    date on every row would be noise, not information.
+    """
     if dt is None:
         return "&mdash;"
     iso = dt.strftime("%Y-%m-%dT%H:%M:%SZ")
-    return '<time data-utc="%s">%s</time>' % (_e(iso), _e(_fmt_clock_dt(dt)))
+    fmt_attr = ' data-format="headline"' if headline else ""
+    return '<time data-utc="%s"%s>%s</time>' % (_e(iso), fmt_attr, _e(_fmt_clock_dt(dt)))
 
 
 def _fmt_int(n):
@@ -275,7 +289,8 @@ def _render_headline(status):
         finished_clock = None
         started_dt = _parse_iso(started_at)
         if started_dt is not None and elapsed_seconds is not None:
-            finished_clock = _clock_html_dt(started_dt + timedelta(seconds=elapsed_seconds))
+            finished_clock = _clock_html_dt(
+                started_dt + timedelta(seconds=elapsed_seconds), headline=True)
         # headline_html carries markup (the <time> element), so it is assembled
         # from already-safe pieces and passed through unescaped. Escaping it
         # wholesale would print the tag at the reader instead of the time.
