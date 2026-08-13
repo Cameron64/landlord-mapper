@@ -67,4 +67,14 @@ BRAND_FILES = {
     "ManifoldDSA-Regular.woff2": "font/woff2",
 }
 
-BRAND_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "brand")
+# brand/ is a sibling of the lm package, not a member of it: Dockerfile copies
+# it to /app/brand while this file lands at /app/lm/skin.py. Hence the second
+# dirname. Before the lm split this line lived in server.py at /app, where one
+# dirname was right; copying it verbatim into the package silently moved the
+# lookup to /app/lm/brand and 404'd the masthead mark on every dsa-skin page.
+# Nothing at runtime notices: send_brand() turns a missing file into a 404 on
+# purpose, for the two fonts that are deliberately absent, so a wrong directory
+# looks exactly like the intended degradation. The Dockerfile asserts the mark
+# resolves at build time instead -- keep that check in step with this path.
+BRAND_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "brand")

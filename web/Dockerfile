@@ -52,6 +52,21 @@ COPY lm/ ./lm/
 # skins and got an unstyled page. 178 KB, all of it immutably cacheable.
 COPY brand/ ./brand/
 
+# Fail the BUILD if lm.skin cannot find the mark it just copied. This is not
+# defensive noise: send_brand() answers 404 for a missing file on purpose, so
+# that the unlicensed fonts can degrade quietly, which means a wrong BRAND_DIR
+# is indistinguishable at runtime from the intended behaviour. That is exactly
+# how the lm-package split shipped a 404'd masthead unnoticed for a week.
+#
+# Only the mark is asserted, because it is the one file that must be present in
+# every checkout. The fonts are licensed, so they are absent here and present in
+# the private deploy checkout; the build PRINTS which ones are missing rather
+# than failing, so a deploy that silently lost them is visible in the build log.
+RUN python -c "import os, lm.skin as s; \
+absent = [n for n in s.BRAND_FILES if not os.path.isfile(os.path.join(s.BRAND_DIR, n))]; \
+assert 'bat-circle-red.svg' not in absent, 'BRAND_DIR does not resolve: ' + s.BRAND_DIR; \
+print('brand ok at', s.BRAND_DIR, '- absent by licence:', absent or 'none')"
+
 # The database lives on a Railway volume, NOT in the image. It is ~0.9-1.8 GB,
 # it changes on a data refresh rather than a code change, and baking it in would
 # make every code deploy re-upload it.
