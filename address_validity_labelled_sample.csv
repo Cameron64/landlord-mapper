@@ -1,0 +1,341 @@
+"row_id","value","n_parcels","shape_stratum","old_predicate_says_street","predicted_class","hand_label","agrees"
+1,"0",1,"short_le22",TRUE,"unparseable","unparseable",TRUE
+2,"00000",196,"short_le22",TRUE,"unparseable","unparseable",TRUE
+3,"1",38,"short_le22",TRUE,"unparseable","unparseable",TRUE
+4,"100 E HUTCHINSON ST UNDEL BEEVILLE TX 78102",2,"leading_digit",TRUE,"street","street",TRUE
+5,"1000 CHINABERRY DR 700 BOSSIER CITY LA 71111",1,"foreign",TRUE,"street","street",TRUE
+6,"1002 PENION DR AUSTIN TX 78748",1,"leading_digit",TRUE,"street","street",TRUE
+7,"1003 CEDARRIDGE CT LEANDER TX 78641",1,"leading_digit",TRUE,"street","street",TRUE
+8,"1006 HILL ST BASTROP TX 78602",1,"leading_digit",TRUE,"street","street",TRUE
+9,"101 N HILL CIR LEANDER TX 78641",1,"leading_digit",TRUE,"street","street",TRUE
+10,"101 WOODS EDGE LN GEORGETOWN TX 78628",1,"leading_digit",TRUE,"street","street",TRUE
+11,"102 DA GAMA ",1,"short_le22",TRUE,"street","street",TRUE
+12,"1023 OXFORD WY LA CANADA FLINTRIDGE CA 91011",3,"foreign",TRUE,"street","street",TRUE
+13,"1027 HAMMOND AVE SAN ANTONIO TX 78210",1,"leading_digit",TRUE,"street","street",TRUE
+14,"104 BEACH MTN CV GEORGETOWN TX 78633",1,"leading_digit",TRUE,"street","street",TRUE
+15,"104 CHINABERRY HILL LA VERNIA TX 78121",2,"foreign",TRUE,"street","street",TRUE
+16,"104 SULTANA CT ROUND ROCK TX 78664",1,"leading_digit",TRUE,"street","street",TRUE
+17,"105 LAUREN CT LA VERNIA TX 78121",2,"leading_digit",TRUE,"street","street",TRUE
+18,"106 GRANITE DR GEORGETOWN TX 78626",1,"leading_digit",TRUE,"street","street",TRUE
+19,"107 CEDAR SPRINGS DR WIMBERLEY TX 78676",1,"leading_digit",TRUE,"street","street",TRUE
+20,"10908 SLAUGHTER CREEK DR AUSTIN TX 78748",2,"leading_digit",TRUE,"street","street",TRUE
+21,"1107 ENCLAVE WY HUTTO TX 78634",1,"leading_digit",TRUE,"street","street",TRUE
+22,"11504 MURCHISON ST MANOR TX 78653",1,"leading_digit",TRUE,"street","street",TRUE
+23,"11729 CHERISSE DR AUSTIN TX 78739",1,"leading_digit",TRUE,"street","street",TRUE
+24,"1180 GOATHILL RD LAKEHILLS TX 78063",1,"leading_digit",TRUE,"street","street",TRUE
+25,"12055 STILL PASS SAN ANTONIO TX 78221",1,"leading_digit",TRUE,"street","street",TRUE
+26,"12127 CHAMBERS CV SAN ANTONIO TX 78253",1,"leading_digit",TRUE,"street","street",TRUE
+27,"1229 LEGENDS LN GEORGETOWN TX 78628",1,"leading_digit",TRUE,"street","street",TRUE
+28,"1233 LACEY OAK LOOP ROUND ROCK TX 78681",1,"leading_digit",TRUE,"street","street",TRUE
+29,"124 FIRST AVE S 100 FRANKLIN TX 37064",1,"leading_digit",TRUE,"street","street",TRUE
+30,"12406 VISTA RIM LIVE OAK TX 78233",1,"leading_digit",TRUE,"street","street",TRUE
+31,"12407 MODENA BAY SAN ANTONIO TX 78253",1,"leading_digit",TRUE,"street","street",TRUE
+32,"125 KITTY HAWK RUN CIBOLO TX 78108",1,"leading_digit",TRUE,"street","street",TRUE
+33,"1274 VIA BELCANTO SAN ANTONIO TX 78260",2,"leading_digit",TRUE,"street","street",TRUE
+34,"129 SPIRIT ST ELGIN TX 78621",1,"leading_digit",TRUE,"street","street",TRUE
+35,"13020 HEATHERS REEF SAINT HEDWIG TX 78152",1,"leading_digit",TRUE,"street","street",TRUE
+36,"131 AMISTAD BLVD ",1,"short_le22",TRUE,"street","street",TRUE
+37,"131 PALMA NOCE SAN ANTONIO TX 78253",1,"leading_digit",TRUE,"street","street",TRUE
+38,"13170 BEALS CIR SAN ANTONIO TX 78253",1,"leading_digit",TRUE,"street","street",TRUE
+39,"13511 TOPEZ LAKE SAN ANTONIO TX 78216",1,"leading_digit",TRUE,"street","street",TRUE
+40,"13721 DISMUKE DR MANOR TX 78653",1,"leading_digit",TRUE,"street","street",TRUE
+41,"140 TRILLIUM LN CASTLE HILLS TX 78213",1,"leading_digit",TRUE,"street","street",TRUE
+42,"1411 GRACY FARMS LN 79 AUSTIN TX 78758",1,"leading_digit",TRUE,"street","street",TRUE
+43,"1412 TALLEY LP BUDA TX 78610",1,"leading_digit",TRUE,"street","street",TRUE
+44,"142 CYNTHIA DR ",1,"short_le22",TRUE,"street","street",TRUE
+45,"142 KENNEDY AVE ALAMO HEIGHTS TX 78209",1,"leading_digit",TRUE,"street","street",TRUE
+46,"1423 MANFORD HILL DR AUSTIN TX 78753",1,"leading_digit",TRUE,"street","street",TRUE
+47,"1440 CR 150 GEORGETOWN TX 78626",3,"leading_digit",TRUE,"street","street",TRUE
+48,"152 W KAANAPALI BASTROP TX 78602",1,"leading_digit",TRUE,"street","street",TRUE
+49,"1523 RANGE FLD SAN ANTONIO TX 78245",1,"leading_digit",TRUE,"street","street",TRUE
+50,"15407 POPPY PETAL DR DEL VALLE TX 78617",1,"leading_digit",TRUE,"street","street",TRUE
+51,"155 GUILFORD FRG ",1,"short_le22",TRUE,"street","street",TRUE
+52,"156 ELM LEAF SCHERTZ TX 78154",1,"leading_digit",TRUE,"street","street",TRUE
+53,"15642 MISSION CRST SAN ANTONIO TX 78232",1,"leading_digit",TRUE,"street","street",TRUE
+54,"15802 MARISA PL SAN ANTONIO TX 78247",1,"leading_digit",TRUE,"street","street",TRUE
+55,"159 BRINKLEY LN ELGIN TX 78621",2,"leading_digit",TRUE,"street","street",TRUE
+56,"1600 AUGUSTA DR 437 HOUSTON TX 77057",1,"leading_digit",TRUE,"street","street",TRUE
+57,"16335 FM 630 ODEM TX 78370",2,"leading_digit",TRUE,"street","street",TRUE
+58,"165 MERCURY CV LEANDER TX 78641",1,"leading_digit",TRUE,"street","street",TRUE
+59,"17307 OLD CORPUS CHRISTI HWY ELMENDORF TX 78112",1,"leading_digit",TRUE,"street","street",TRUE
+60,"1748 OHILLEN RD 45 AUSTIN TX 78757",1,"leading_digit",TRUE,"street","street",TRUE
+61,"17917 ICE AGE TRLS PFLUGERVILLE TX 78660",1,"leading_digit",TRUE,"street","street",TRUE
+62,"1809 CANDLELIGHT DR LEANDER TX 78641",1,"leading_digit",TRUE,"street","street",TRUE
+63,"181 ANN POWELL RD SMITHVILLE TX 78957",1,"leading_digit",TRUE,"street","street",TRUE
+64,"1820 ASPEN ST SAN MARCOS TX 78666",1,"leading_digit",TRUE,"street","street",TRUE
+65,"1901 MIR WOODS DR LEANDER TX 78641",1,"leading_digit",TRUE,"street","street",TRUE
+66,"1910 LYNDON ST NEW BRAUNFELS TX 78132",1,"leading_digit",TRUE,"street","street",TRUE
+67,"2 225 ",1,"short_le22",TRUE,"unparseable","unparseable",TRUE
+68,"2005 MANADA TRL LEANDER TX 78641",1,"leading_digit",TRUE,"street","street",TRUE
+69,"2010 W HUISACHE AVE SAN ANTONIO TX 78201",2,"leading_digit",TRUE,"street","street",TRUE
+70,"2030 N VERMONT 15 LOS ANGELES CA 90027",1,"leading_digit",TRUE,"street","street",TRUE
+71,"204 PELICAN BAY CIR KYLE TX 78640",1,"leading_digit",TRUE,"street","street",TRUE
+72,"207 BARTLETT PEAK DR GEORGETOWN TX 78633",3,"leading_digit",TRUE,"street","street",TRUE
+73,"21 HIGHILLANDS CIR BULVERDE TX 78163",1,"leading_digit",TRUE,"street","street",TRUE
+74,"2105B PAT BOOKER RD ",1,"short_le22",TRUE,"street","street",TRUE
+75,"21110 NIMITZ AVE LAGO VISTA TX 78645",1,"leading_digit",TRUE,"street","street",TRUE
+76,"21130 VILLA VALENCIA SAN ANTONIO TX 78258",1,"leading_digit",TRUE,"street","street",TRUE
+77,"216 CORNICHE CIR HUTTO TX 78634",1,"leading_digit",TRUE,"street","street",TRUE
+78,"217 CANADA VERDE ST SAN ANTONIO TX 78232",1,"foreign",TRUE,"street","street",TRUE
+79,"2174 TRIPLE PEAK DR CANYON LAKE TX 78133",1,"leading_digit",TRUE,"street","street",TRUE
+80,"2201 HAYFIELD SQ PFLUGERVILLE TX 78660",1,"leading_digit",TRUE,"street","street",TRUE
+81,"224 MAY ST CASTROVILLE TX 78009",3,"leading_digit",TRUE,"street","street",TRUE
+82,"225 ",2,"short_le22",TRUE,"unparseable","unparseable",TRUE
+83,"226 BUTTERNUT BLVD SAN ANTONIO TX 78245",2,"leading_digit",TRUE,"street","street",TRUE
+84,"227 OAK PARK DR SAN ANTONIO TX 78209",1,"leading_digit",TRUE,"street","street",TRUE
+85,"2281 LIGHTHOUSE DR NEW BRAUNFELS TX 78130",1,"leading_digit",TRUE,"street","street",TRUE
+86,"2304 RUNDELL PL AUSTIN TX 78704",1,"leading_digit",TRUE,"street","street",TRUE
+87,"2305 SINGLETREE BND GEORGETOWN TX 78628",1,"leading_digit",TRUE,"street","street",TRUE
+88,"23120 ADAMS XING SAN ANTONIO TX 78255",1,"leading_digit",TRUE,"street","street",TRUE
+89,"2331 PENDANT PASS SAN ANTONIO TX 78232",1,"leading_digit",TRUE,"street","street",TRUE
+90,"235 POSSUM KINGDOM DR KYLE TX 78640",1,"foreign",TRUE,"street","street",TRUE
+91,"239 B WOODWY DR ELGIN TX 78621",2,"leading_digit",TRUE,"street","street",TRUE
+92,"240 S BEAR CREEK RD LIBERTY HILL TX 78642",1,"leading_digit",TRUE,"street","street",TRUE
+93,"2410 TROWER AVE NAPA CA 94558",2,"leading_digit",TRUE,"street","street",TRUE
+94,"24422 GALO CYN SAN ANTONIO TX 78260",3,"leading_digit",TRUE,"street","street",TRUE
+95,"245 LAZY C NEW BRAUNFELS TX 78132",1,"leading_digit",TRUE,"street","street",TRUE
+96,"2501 S CELIA DR CEDAR PARK TX 78613",1,"leading_digit",TRUE,"street","street",TRUE
+97,"2605 AYLESBURY LN AUSTIN TX 78745",1,"leading_digit",TRUE,"street","street",TRUE
+98,"2711 OAK BLF SAN ANTONIO TX 78230",1,"leading_digit",TRUE,"street","street",TRUE
+99,"2907 E 13 ST AUSTIN TX 78702",1,"leading_digit",TRUE,"street","street",TRUE
+100,"2908 LAFAYETTE ST HOUSTON TX 77005",1,"leading_digit",TRUE,"street","street",TRUE
+101,"301 E LINDBERGH BLVD ",1,"short_le22",TRUE,"street","street",TRUE
+102,"3082 SHADOW MTN DR LAKE ISABELLA CA 93240",3,"leading_digit",TRUE,"street","street",TRUE
+103,"309 GREEN RIDGE RD SE CARTERSVILLE GA 30120",6,"leading_digit",TRUE,"street","street",TRUE
+104,"3128 SAN MIGUEL NEW BRAUNFELS TX 78132",2,"leading_digit",TRUE,"street","street",TRUE
+105,"3149 AGATE DR SANTA CLARA CA 95051",1,"leading_digit",TRUE,"street","street",TRUE
+106,"318 BLFCREST SAN ANTONIO TX 78216",1,"leading_digit",TRUE,"street","street",TRUE
+107,"318 SILLAWN AVE SAN ANTONIO TX 78237",1,"leading_digit",TRUE,"street","street",TRUE
+108,"3225 ",1,"short_le22",TRUE,"unparseable","unparseable",TRUE
+109,"323 RAVEN RDG NEW BRAUNFELS TX 78130",1,"leading_digit",TRUE,"street","street",TRUE
+110,"3316 GUADALUPE ST 311 AUSTIN TX 78705",1,"leading_digit",TRUE,"street","street",TRUE
+111,"3401 CHARLOTTE ROSE DR AUSTIN TX 78704",1,"leading_digit",TRUE,"street","street",TRUE
+112,"3451 KRIE HIGHILLANDS SAN ANTONIO TX 78245",1,"leading_digit",TRUE,"street","street",TRUE
+113,"348 WATERWY PASS NEW BRAUNFELS TX 78130",1,"leading_digit",TRUE,"street","street",TRUE
+114,"3500 GOLIAD RD LOT 218 SAN ANTONIO TX 78223",1,"leading_digit",TRUE,"street","street",TRUE
+115,"3531 ESPERANZA DR ROUND ROCK TX 78665",1,"leading_digit",TRUE,"street","street",TRUE
+116,"3541 CITRINE PL ROUND ROCK TX 78681",3,"leading_digit",TRUE,"street","street",TRUE
+117,"3718 SAMANTHA CLIFF SAN ANTONIO TX 78261",1,"leading_digit",TRUE,"street","street",TRUE
+118,"372 WAGON XING ",6,"short_le22",TRUE,"street","street",TRUE
+119,"3842 BRIARHAVEN ST SAN ANTONIO TX 78247",1,"leading_digit",TRUE,"street","street",TRUE
+120,"3922 BULVERDE PKWY SAN ANTONIO TX 78259",1,"leading_digit",TRUE,"street","street",TRUE
+121,"401 FRIO SPRINGS TRL GEORGETOWN TX 78628",1,"leading_digit",TRUE,"street","street",TRUE
+122,"402 HARPER ST SEGUIN TX 78155",1,"leading_digit",TRUE,"street","street",TRUE
+123,"405 LYONS AVE PLEASANTON TX 78064",2,"leading_digit",TRUE,"street","street",TRUE
+124,"4123 KNOLLPASS SAN ANTONIO TX 78247",1,"leading_digit",TRUE,"street","street",TRUE
+125,"417 PRIVATE RD 4733 CASTROVILLE TX 78009",2,"leading_digit",TRUE,"street","street",TRUE
+126,"4202 VANTAGE VIEW DR SAN ANTONIO TX 78228",1,"leading_digit",TRUE,"street","street",TRUE
+127,"439 TULN DR SAN ANTONIO TX 78228",1,"leading_digit",TRUE,"street","street",TRUE
+128,"4408 SUMMERCREST LOOP S ROUND ROCK TX 78681",1,"leading_digit",TRUE,"street","street",TRUE
+129,"4510 PLACID PL AUSTIN TX 78731",1,"leading_digit",TRUE,"street","street",TRUE
+130,"4706 SW GOLDEN EAGLE AVE BENTONVILLE AR 72713",1,"leading_digit",TRUE,"street","street",TRUE
+131,"5068 OLD HIGHWY 81 941 NEW BRAUNFELS TX 78132",1,"leading_digit",TRUE,"street","street",TRUE
+132,"507 MONTANA ST SAN ANTONIO TX 78203",1,"leading_digit",TRUE,"street","street",TRUE
+133,"5123 STORMY HILLS SAN ANTONIO TX 78247",1,"leading_digit",TRUE,"street","street",TRUE
+134,"5218 KINGS HWY AUSTIN TX 78745",1,"leading_digit",TRUE,"street","street",TRUE
+135,"538 PLEASANT PARK DR SAN ANTONIO TX 78227",1,"leading_digit",TRUE,"street","street",TRUE
+136,"549 FALCON CV CASTROVILLE TX 78009",1,"leading_digit",TRUE,"street","street",TRUE
+137,"551 TERMINAL LOOP B3 MCQUEENEY TX 78123",7,"leading_digit",TRUE,"street","street",TRUE
+138,"5535 BREWR ST SAN ANTONIO TX 78233",1,"leading_digit",TRUE,"street","street",TRUE
+139,"554 ENGLEWOOD LN CASTROVILLE TX 78009",3,"leading_digit",TRUE,"street","street",TRUE
+140,"555 SANTA ROSA DR LOS GATOS CA 95032",2,"leading_digit",TRUE,"street","street",TRUE
+141,"6003 FALLING STAR SAN ANTONIO TX 78242",1,"leading_digit",TRUE,"street","street",TRUE
+142,"605 PASEO CANADA SAN ANTONIO TX 78232",1,"foreign",TRUE,"street","street",TRUE
+143,"605 S SHERMAN 705J RICHARDSON TX 75081",1,"leading_digit",TRUE,"street","street",TRUE
+144,"6126 FRIO VALLEY SAN ANTONIO TX 78212",1,"leading_digit",TRUE,"street","street",TRUE
+145,"621 MEADOWS DALLAS TX",1,"short_le22",TRUE,"street","street",TRUE
+146,"6302 BLARWOOD DR AUSTIN TX 78745",1,"leading_digit",TRUE,"street","street",TRUE
+147,"634 RIVER RUN WY SAN ANTONIO TX 78219",1,"leading_digit",TRUE,"street","street",TRUE
+148,"664 PLANTERS PASS SCHERTZ TX 78154",1,"leading_digit",TRUE,"street","street",TRUE
+149,"6711 COUNTRY VIEW LN SAN ANTONIO TX 78240",1,"leading_digit",TRUE,"street","street",TRUE
+150,"6908 PANDA ROYLE DR DEL VALLE TX 78617",1,"leading_digit",TRUE,"street","street",TRUE
+151,"6939 HANOVER STONE SAN ANTONIO TX 78244",1,"leading_digit",TRUE,"street","street",TRUE
+152,"6944 HUDSON BLVD N ST PAUL MN 55128",1,"leading_digit",TRUE,"street","street",TRUE
+153,"7207 TIMBER RIDGE DR SAN ANTONIO TX 78227",1,"leading_digit",TRUE,"street","street",TRUE
+154,"730 TRANCHET TRL SAN ANTONIO TX 78221",1,"leading_digit",TRUE,"street","street",TRUE
+155,"7302 HALBERT DR AUSTIN TX 78750",1,"leading_digit",TRUE,"street","street",TRUE
+156,"7302 MILKY WY DAWN SAN ANTONIO TX 78252",1,"leading_digit",TRUE,"street","street",TRUE
+157,"7308 SCENIC BROOK DR AUSTIN TX 78736",1,"leading_digit",TRUE,"street","street",TRUE
+158,"7404 COTTONTAIL CLIFF SAN ANTONIO TX 78253",1,"leading_digit",TRUE,"street","street",TRUE
+159,"7406 BUCKBOARD LN SAN ANTONIO TX 78227",1,"leading_digit",TRUE,"street","street",TRUE
+160,"7435 TRANQUILLO WY SAN ANTONIO TX 78266",1,"leading_digit",TRUE,"street","street",TRUE
+161,"801 ANGLETON CV AUSTIN TX 78748",1,"leading_digit",TRUE,"street","street",TRUE
+162,"817 SALADO CREEK LN GEORGETOWN TX 78633",1,"leading_digit",TRUE,"street","street",TRUE
+163,"818 MAGNOLIA MIST SAN ANTONIO TX 78216",1,"leading_digit",TRUE,"street","street",TRUE
+164,"8203 SCENIC RIDGE CV AUSTIN TX 78735",1,"leading_digit",TRUE,"street","street",TRUE
+165,"845 CR 177 LEANDER TX 78641",1,"leading_digit",TRUE,"street","street",TRUE
+166,"847 YANTICAW BROOK ST SAN ANTONIO TX 78260",1,"leading_digit",TRUE,"street","street",TRUE
+167,"8608 ED KINGDOM DR AUSTIN TX 78748",1,"foreign",TRUE,"street","street",TRUE
+168,"8612 ED KINGDOM DR AUSTIN TX 78748",1,"foreign",TRUE,"street","street",TRUE
+169,"8669 I10 E CONVERSE TX 78109",1,"leading_digit",TRUE,"street","street",TRUE
+170,"8806 LAGUNA FLS SAN ANTONIO TX 78251",1,"leading_digit",TRUE,"street","street",TRUE
+171,"8935 WALNUT SPRINGS ",1,"short_le22",TRUE,"street","street",TRUE
+172,"9019 YETT AVE SAN ANTONIO TX 78221",1,"leading_digit",TRUE,"street","street",TRUE
+173,"911 CANADIAN GOOSE SAN ANTONIO TX 78245",1,"leading_digit",TRUE,"street","street",TRUE
+174,"9112 LA SIESTA BND AUSTIN TX 78749",1,"leading_digit",TRUE,"street","street",TRUE
+175,"916 E 32 ST 101 AUSTIN TX 78705",1,"leading_digit",TRUE,"street","street",TRUE
+176,"921 SAN FERNANDO LN NEW BRAUNFELS TX 78132",2,"leading_digit",TRUE,"street","street",TRUE
+177,"9212 LARSONS LN HELOTES TX 78023",1,"leading_digit",TRUE,"street","street",TRUE
+178,"9227 OVERTON RD SAN ANTONIO TX 78217",1,"leading_digit",TRUE,"street","street",TRUE
+179,"ADDRESS UNKNOWN 0 US",2,"short_le22",FALSE,"no_location","no_location",TRUE
+180,"ADDRESS UNKNOWN FLORESVILLE TX",2,"no_digits",FALSE,"city_only","city_only",TRUE
+181,"ADDRESS UNKNOWN PER DO US",4,"no_digits",FALSE,"no_location","no_location",TRUE
+182,"ADDRESS UNKNOWN PER OPERATOR",68,"no_digits",FALSE,"no_location","no_location",TRUE
+183,"ADDRESS UNKNOWN PIPE CREEK TX US",1,"no_digits",FALSE,"city_only","city_only",TRUE
+184,"ALVARADO MARTIN A CELIA SAN ANTONIO TX 78245",1,"digit_not_leading",FALSE,"city_only","city_only",TRUE
+185,"ANDRADE MARTINEZ MERLIN 252 GABLE ST KYLE TX 78640",1,"digit_not_leading",FALSE,"street","street",TRUE
+186,"APACHE JUNCTION AZ 85119",10,"digit_not_leading",FALSE,"city_only","city_only",TRUE
+187,"ATTN ACCT PAY TAX RENDITION PO BOX 2689 WACO TX 76702",1,"attn_prefix",FALSE,"street","street",TRUE
+188,"ATTN AD VALOREM TAX DEPT PO BOX 4018 HOUSTON TX 77210",2,"attn_prefix",FALSE,"street","street",TRUE
+189,"ATTN ANDERSON TRENA 205 CIR DR BUDA TX 78610",1,"attn_prefix",FALSE,"street","street",TRUE
+190,"ATTN BOX 228 200 UNIVERSITY BLVD 225 ROUND ROCK TX 78665",1,"attn_prefix",FALSE,"street","street",TRUE
+191,"ATTN BURKHART BRETT H COLLEEN O 101 OLD SETTLER RD KYLE TX 78640",1,"attn_prefix",FALSE,"street","street",TRUE
+192,"ATTN CHAMBERS DOUGLAS L JUDITH A TRUES 181 BRIGHTON LN AUSTIN TX 78737",1,"attn_prefix",FALSE,"street","street",TRUE
+193,"ATTN DEBORAH ELLIOTT 901 OLD RR 12 SAN MARCOS TX 78666",1,"attn_prefix",FALSE,"street","street",TRUE
+194,"ATTN DONALD REEVES 505 RED CORRAL RANCH RD WIMBERLEY TX 78676",1,"attn_prefix",FALSE,"street","street",TRUE
+195,"ATTN KAITLYN MILLER ",1,"short_le22",FALSE,"no_location","no_location",TRUE
+196,"AV BOSQUES DEL VALLE 214 COLONIA BOSQUES DE VALLE SAN PEDRO GARZA GARCIA NUEVO LEON MX",1,"foreign",FALSE,"street","street",TRUE
+197,"BOSQUE DE JACARANDAS 193 BOSQUEOLE LOS LOMAS 11700",1,"digit_not_leading",FALSE,"street","street",TRUE
+198,"BOX 12 KINGSBURY TX 78638",1,"po_box",FALSE,"street","street",TRUE
+199,"BOX 141 LA CO TX 78039",1,"short_le22",FALSE,"street","street",TRUE
+200,"BOX 2330 BANDERA TX 78003",2,"po_box",FALSE,"street","street",TRUE
+201,"BOX 238 CASTROVILLE TX 78009",2,"po_box",FALSE,"street","street",TRUE
+202,"BOX 238 UNDEL PACIFIC BEACH WA 98571",1,"po_box",FALSE,"street","street",TRUE
+203,"BOX 2689 WACO TX 76702",2,"short_le22",FALSE,"street","street",TRUE
+204,"BOX 281 LA CO TX 78039",1,"short_le22",FALSE,"street","street",TRUE
+205,"BOX 282 HONDO TX 78861",4,"short_le22",FALSE,"street","street",TRUE
+206,"BOX 326 CHARLOTTE 78011",1,"po_box",FALSE,"street","street",TRUE
+207,"BOX 338 POTEET TX 78065",1,"po_box",FALSE,"street","street",TRUE
+208,"BOX 403 LA CO TX 78039",1,"short_le22",FALSE,"street","street",TRUE
+209,"BULVERDE TX 78163",29,"short_le22",FALSE,"city_only","city_only",TRUE
+210,"CALZADA DE LAS AGUILAS 830 CASA 35 MEXICO MX",1,"foreign",FALSE,"street","street",TRUE
+211,"CLINT COONS TRUE KYLE TX 78640",1,"digit_not_leading",FALSE,"city_only","city_only",TRUE
+212,"CLUB CAPESTRE 5 QUERETARO 76190",1,"digit_not_leading",FALSE,"city_only","street",FALSE
+213,"CMR 427 BOX 1429 APO AE 9630 US",1,"digit_not_leading",FALSE,"street","street",TRUE
+214,"CO DUCHARME MCMILLEN ASSOC ",2,"co_prefix",FALSE,"no_location","no_location",TRUE
+215,"CO DUFF PHELPS PO BOX 2549 ADDISON TX 75001",1,"co_prefix",FALSE,"street","street",TRUE
+216,"CO ESMERALDA MURILLO 602A N GRANGER ST GRANGER TX 76530",1,"co_prefix",FALSE,"street","street",TRUE
+217,"CO FLORES ",1,"short_le22",FALSE,"no_location","no_location",TRUE
+218,"CO HURTADO BRITTANY L HURTADO ASHILLEY MFAUSTO 420 OAK MWADOWS SAN MARCOS TX 78666",1,"co_prefix",FALSE,"street","street",TRUE
+219,"CO JENNIE S MITCHELL 10020 ALCAN ST EL PASO TX 79924",1,"co_prefix",FALSE,"street","street",TRUE
+220,"CO JOHN ALLRED 940 HUDSON LN NEW BRAUNFELS TX 78130",1,"co_prefix",FALSE,"street","street",TRUE
+221,"CO OSCAR ORTIZ 465 SHEFFIELD RD SEGUIN TX 78155",1,"co_prefix",FALSE,"street","street",TRUE
+222,"CO PRITCHARD TIMOTHY J D PRITCHARD BEVERLY COTRUES 23 CREEK SIDE DR WIMBERLEY TX 78676",1,"co_prefix",FALSE,"street","street",TRUE
+223,"CO RYAN LLC AFFILIATE RYAN TAX COMPLIANCE SERVS ",1,"co_prefix",FALSE,"no_location","no_location",TRUE
+224,"CO RYAN TAX COMPLIANCE SERVICES ",1,"co_prefix",FALSE,"no_location","no_location",TRUE
+225,"CO TEXAS COUNTRY HOLDINGS LLC 5701 W SLAUGHTER LN A130 150 AUSTIN TX 78749",2,"co_prefix",FALSE,"street","street",TRUE
+226,"COL BOSQUES DE TARANGO C P 01580 MX",1,"foreign",FALSE,"city_only","city_only",TRUE
+227,"COL INFONAVIT CD SABINAS COAHUILA MEXICO MX",5,"foreign",FALSE,"city_only","city_only",TRUE
+228,"COL MILITAR MARTE DELEG IZTACALCO CP 08830 MEXICO DF MX",1,"foreign",FALSE,"city_only","city_only",TRUE
+229,"COL SAN ISIDRO TORREON COAHULA 27100 MX",1,"foreign",FALSE,"city_only","city_only",TRUE
+230,"COSTA MESA CA 92627",1,"short_le22",FALSE,"city_only","city_only",TRUE
+231,"CR 2220 647 MINEOLA TX 75773",1,"highway",FALSE,"street","street",TRUE
+232,"CRAIG VEN SELLMAN BRANDA SELLMAN TRUES 460 CREEKSIDE DR BUDA TX 78610",2,"highway",FALSE,"street","street",TRUE
+233,"CRM 480 BOX 2910 APO AE 99999",1,"highway",FALSE,"street","street",TRUE
+234,"DECEASED PER RETURNED MAIL MAY 13 1996",1,"digit_not_leading",FALSE,"no_location","no_location",TRUE
+235,"DENVER CO 99999",21,"short_le22",FALSE,"city_only","city_only",TRUE
+236,"ELIZABETH SNYDER ADDRESS UNKNOWN",1,"no_digits",FALSE,"no_location","no_location",TRUE
+237,"ELMENDORF 0 US",1,"short_le22",FALSE,"no_location","city_only",FALSE
+238,"ENGLAND TIMOTHY D KUBBA DINA L TRUES 5618 S OLD BASTROP HWY SAN MARCOS TX 78666",1,"foreign",FALSE,"street","street",TRUE
+239,"FKA DUFF PHELPS LLC PO BOX 2629 ADDISON TX 75001",21,"digit_not_leading",FALSE,"street","street",TRUE
+240,"FM 2146 POTEET TX 78065",1,"highway",TRUE,"street","street",TRUE
+241,"FM 327 ELMENDORF TX 78112",1,"highway",TRUE,"street","street",TRUE
+242,"FRACC RESIDENCIAL SAN ANGEL PUEBLA PUEBLA 72190 MEXICO MX",1,"foreign",FALSE,"city_only","city_only",TRUE
+243,"GORDON LINAM LEE ANN LINAM TRUES 200 HOOTS HOLLER WIMBERLEY TX 78676",1,"digit_not_leading",FALSE,"street","street",TRUE
+244,"GUARDIAN OF ESTATE OF KIRK A KELLNER ",5,"no_digits",FALSE,"no_location","no_location",TRUE
+245,"HAROLD H WIEDERSPAN UNKNOWN",1,"no_digits",FALSE,"no_location","no_location",TRUE
+246,"HC 4 BOX 405 MARBLE FALLS TX 78654",1,"rural_route",TRUE,"street","street",TRUE
+247,"HC 75 BOX 1201 LOS OJOS NM 87551",1,"rural_route",TRUE,"street","street",TRUE
+248,"HC10 BOX 6715 SABANA GRANDE PR 637",1,"rural_route",FALSE,"street","street",TRUE
+249,"HCR 3 BOX 85A DEL RIO TX 78840",1,"rural_route",FALSE,"street","street",TRUE
+250,"HDA BONDENQUI 26 HDA VALLESCONDIDO ATIZAPAN EDO MEXICO 52937 MX",1,"foreign",FALSE,"street","street",TRUE
+251,"HIGHWY 175 AND HIGHWY 90 MABANK TX",1,"highway",FALSE,"street","street",TRUE
+252,"HOUSTON TX 77005",13,"short_le22",FALSE,"city_only","city_only",TRUE
+253,"I ASHBROOK PL THE HILLS TX 78738",1,"digit_not_leading",FALSE,"city_only","street",FALSE
+254,"INTERNATIONAL BUILDING SAN ANTONIO TX",1,"no_digits",FALSE,"city_only","city_only",TRUE
+255,"KATIE HOOKER NEW BRAUNFELS TX US",1,"no_digits",FALSE,"city_only","city_only",TRUE
+256,"KILLINEY COUNTY DUBLIN NU",1,"no_digits",FALSE,"city_only","city_only",TRUE
+257,"LAST KNOWN ADDRESS INCORRECT CURRENT ADDRESS UNKNOWN",7,"no_digits",FALSE,"no_location","no_location",TRUE
+258,"LITTLEFIELD BUILDING AUSTIN TX",1,"no_digits",FALSE,"city_only","city_only",TRUE
+259,"LN JACK L JANE P 360 MANCHER LN AUSTIN TX 78737",1,"digit_not_leading",FALSE,"street","street",TRUE
+260,"LOMAS DE SANTA FE ALVARO OBREGON 01210 00000 NU",2,"digit_not_leading",FALSE,"city_only","city_only",TRUE
+261,"LULING WATER PLANT 00000",1,"digit_not_leading",FALSE,"no_location","no_location",TRUE
+262,"MARTHA MAHAN TRUE 14333 DORSAL ST CORPUS CHRISTI TX 78418",1,"digit_not_leading",FALSE,"street","street",TRUE
+263,"MONCTON NEW BRUNSWICK CANADA E1E 3N8 NONUS",1,"foreign",FALSE,"city_only","city_only",TRUE
+264,"NAUCALPAN DE JUAREZ CIUDAD SATELITE MEXICO 53100 00000 MX",1,"foreign",FALSE,"city_only","city_only",TRUE
+265,"NEW YORK NY 10038",2,"short_le22",FALSE,"city_only","city_only",TRUE
+266,"NEWBURY PARK CA 91320",1,"short_le22",FALSE,"city_only","city_only",TRUE
+267,"NT 405 E MARKET US",2,"short_le22",FALSE,"street","street",TRUE
+268,"NT 9217 SEA PINE LN US",2,"short_le22",FALSE,"street","street",TRUE
+269,"NT14 W MAIN STMERIDANCT US",5,"digit_not_leading",FALSE,"no_location","unparseable",FALSE
+270,"NT2147WLAURELSTSANANTTX78201",1,"digit_not_leading",FALSE,"no_location","unparseable",FALSE
+271,"ONE GALLERIA BLVD 1950 METAIRIE LA 70001",1,"spelled_number",FALSE,"street","street",TRUE
+272,"ONE H R BLOCK WY 4400 FREDERICKSBURG RD 114 KANSAS CITY MO 64105",1,"spelled_number",FALSE,"street","street",TRUE
+273,"ONE HORSESHOE BAY BLVD HORSESHOE BAY TX 78657",1,"spelled_number",FALSE,"street","street",TRUE
+274,"ONE JERICHO PLZ JERICHO NY 11753",1,"spelled_number",FALSE,"street","street",TRUE
+275,"ONE RIVERWY 2430 HOUSTON TX 77056",1,"spelled_number",FALSE,"street","street",TRUE
+276,"PO BIX 700113 SAN ANTONIO TX 78270",1,"digit_not_leading",FALSE,"street","street",TRUE
+277,"PO BOX 1030 BAY CITY TX 77404",1,"po_box",TRUE,"street","street",TRUE
+278,"PO BOX 1287 POTH TX 78147",3,"po_box",TRUE,"street","street",TRUE
+279,"PO BOX 131088 TYLER TX 75713",2,"po_box",TRUE,"street","street",TRUE
+280,"PO BOX 1386 LA VERNIA TX 78121",1,"po_box",TRUE,"street","street",TRUE
+281,"PO BOX 2612 AUSTIN TX 78768",1,"po_box",TRUE,"street","street",TRUE
+282,"PO BOX 374 CHARLOTTE TX 78011",1,"po_box",TRUE,"street","street",TRUE
+283,"PO BOX 378 MCQUEENEY TX 78123",2,"po_box",TRUE,"street","street",TRUE
+284,"PO BOX 40045 AUSTIN TX 78704",1,"po_box",TRUE,"street","street",TRUE
+285,"PO BOX 632253 LITTLETON CO 80130",1,"po_box",TRUE,"street","street",TRUE
+286,"PO BOX 678 MARION TX 78124",2,"po_box",TRUE,"street","street",TRUE
+287,"PO BOX 824 ELGIN TX 78621",1,"po_box",TRUE,"street","street",TRUE
+288,"PO BOX 975 COCKEYSVILLE MD 21030",12,"po_box",TRUE,"street","street",TRUE
+289,"PO BOX A3880 CHICAGO IL 60690",9,"po_box",TRUE,"street","street",TRUE
+290,"PO BOX A3951 CHICAGO IL 60690",4,"po_box",TRUE,"street","street",TRUE
+291,"PO BOX A3951 PO BOX A3951 IL 60690",1,"po_box",TRUE,"street","street",TRUE
+292,"PO BOX BH003 SAN ANTONIO TX 78201",3,"po_box",TRUE,"street","street",TRUE
+293,"PO BOX DD01 AUSTIN TX 78766",1,"po_box",TRUE,"street","street",TRUE
+294,"PO BOX F277 ELMENDORF TX 78112",1,"po_box",TRUE,"street","street",TRUE
+295,"PO BOX G2 SNOWMASS VILLAGE CO 81615",2,"po_box",TRUE,"street","street",TRUE
+296,"PO BOX Q13 MILLBURN NJ 07041",2,"po_box",TRUE,"street","street",TRUE
+297,"POBOX 119 RIO MEDINA TX 78066",7,"po_box",FALSE,"street","street",TRUE
+298,"POBOX 141 PLEASANTON TX 78064",2,"po_box",FALSE,"street","street",TRUE
+299,"PORFIRIO DIAZ 90 MEXICO CITY MX 03100",1,"foreign",FALSE,"street","street",TRUE
+300,"PRIV ARECIBO 37 PARQUE SAN JUAN STA CLARA OCOYUCAN PUEBLA MEXICO 72830 MX",1,"foreign",FALSE,"street","street",TRUE
+301,"PRIVADA DE LOS TAMARINDOS 32DEPTO 701 BOSQUS DE LAS LOMAS CUAJIMALPA 05120 MX",1,"foreign",FALSE,"street","street",TRUE
+302,"PROPERTY TAX DEPT LUFKIN TX 75902",1,"digit_not_leading",FALSE,"city_only","city_only",TRUE
+303,"ROUTE 20 BOX 178D SAN ANTONIO TX 78218",1,"rural_route",FALSE,"street","street",TRUE
+304,"ROUTE 5 BOX 122 BB YORKTOWN TX 78164",1,"rural_route",FALSE,"street","street",TRUE
+305,"RR 1 BOX 112 SAN MARCOS TX 78666",1,"rural_route",TRUE,"street","street",TRUE
+306,"RR 1 BOX 136A LINDALE TX 75771",1,"rural_route",TRUE,"street","street",TRUE
+307,"RR 1 BOX 156 HARWOOD TX 78632",1,"rural_route",TRUE,"street","street",TRUE
+308,"RR 1 BOX 235 BEDIAS TX 77831",1,"rural_route",TRUE,"street","street",TRUE
+309,"RR 1 BOX 50 NEW WAVERLY TX 77358",1,"rural_route",TRUE,"street","street",TRUE
+310,"RR 2 BOX 901 TEN MILE TN 37880",1,"rural_route",TRUE,"street","street",TRUE
+311,"RRFKAF TRUST 9550 125 ST SEMINOLE FL 33772",1,"rural_route",FALSE,"street","street",TRUE
+312,"RT 1 BOX 758 ELGIN TX 78621",1,"rural_route",FALSE,"street","street",TRUE
+313,"RT 2 BOX 117 BASTROP TX 78602",2,"rural_route",FALSE,"street","street",TRUE
+314,"RT 3 BOX 267 BASTROP TX 78602",1,"rural_route",FALSE,"street","street",TRUE
+315,"SALADO TX 76571",5,"short_le22",FALSE,"city_only","city_only",TRUE
+316,"SALISBURY WILTSHIRE SP1 3HA US",1,"digit_not_leading",FALSE,"no_location","city_only",FALSE
+317,"SAN ANTONIO TX 78213",32,"short_le22",FALSE,"city_only","city_only",TRUE
+318,"SAN ANTONIO TX 78270",10,"short_le22",FALSE,"city_only","city_only",TRUE
+319,"SAN PEDRO GARZA GARCIA NUEVO LEON 66220 MX",1,"foreign",FALSE,"city_only","city_only",TRUE
+320,"SCHILLER DIANA L SAN ANTONIO TX 78201",1,"digit_not_leading",FALSE,"city_only","city_only",TRUE
+321,"SHAH DHARTI SHAH SWAPNIL 700 SALTILLO PL FREMONT CA 94536",1,"highway",FALSE,"street","street",TRUE
+322,"SHERRY LEEANN SPAAR TRUE 122 ACE LN 101 SAN MARCOS TX 78666",1,"highway",FALSE,"street","street",TRUE
+323,"SHIOULING HUANG POMING TERRAZAS PATRICIA 3500 LOHMAN FORD RD 27 LEANDER TX 78645",3,"highway",FALSE,"street","street",TRUE
+324,"SHIRLEY A MERKA 117 WATT DR ELGIN TX 78621",1,"highway",FALSE,"street","street",TRUE
+325,"SIX DESTA DR 1100 MIDLAND TX 79705",1,"spelled_number",FALSE,"street","street",TRUE
+326,"STATE HWY PUBLIC TRANS COMM AUSTIN TX US",1,"no_digits",FALSE,"city_only","city_only",TRUE
+327,"T523202 5 000000000000000 0",1,"digit_not_leading",FALSE,"no_location","unparseable",FALSE
+328,"TWO LINCOLN CENTRE 5420 LBJ FWY 800 DALLAS TX 75420",8,"spelled_number",FALSE,"street","street",TRUE
+329,"TWO NEWTON PL 255 WASHINGTON ST NEWTON MA 2458",2,"spelled_number",FALSE,"street","street",TRUE
+330,"TX 78133",1,"short_le22",FALSE,"no_location","no_location",TRUE
+331,"UNKNOWN 0",1,"short_le22",FALSE,"no_location","no_location",TRUE
+332,"UNKNOWN ADDRESS HOBSON TX",2,"no_digits",FALSE,"city_only","city_only",TRUE
+333,"UNKNOWN ADDRESS UNKNOWN ADDRESS UNKNOWN ADDRESS UNKNOWN CITY UNKNOWN STATE UNKNOWN ZIP",796,"no_digits",FALSE,"no_location","no_location",TRUE
+334,"UNKNOWN CITY US",1,"short_le22",FALSE,"no_location","no_location",TRUE
+335,"UNKNOWN PER PO 25OCT96",1,"short_le22",FALSE,"no_location","no_location",TRUE
+336,"URB PASEOS DE PLAN BONITO CABO ROJO PR 623",14,"digit_not_leading",FALSE,"no_location","city_only",FALSE
+337,"VALPARAISO 308 COL GUADALUPE MONCLOVA COAHUILA MX",1,"foreign",FALSE,"street","street",TRUE
+338,"VEN MARC ANN ROBIN BRETOW 42 CHATSWORTH CT OAKLAND CA 94611",1,"digit_not_leading",FALSE,"street","street",TRUE
+339,"WILLIAM D BAILEY GUARDIAN ",15,"no_digits",FALSE,"no_location","no_location",TRUE
+340,"Z1411110Z HONGO BUNKYOKU TO 113",1,"digit_not_leading",FALSE,"no_location","city_only",FALSE
