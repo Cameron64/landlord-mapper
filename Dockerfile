@@ -27,6 +27,21 @@ COPY renv/settings.json renv/settings.json
 #COPY _targets/ _targets/
 # Restore R project library - force source package builds to ensure TBB compatibility
 RUN R -s -e "renv::restore()"
+
+# Rfast is a hard dependency -- _targets.R does library(Rfast) and lists it in
+# tar_option_set(packages) -- but it is absent from renv.lock, so renv::restore()
+# above does not install it. The images in use carry it because it was added to
+# a running container out of band and never written back to the lockfile. That
+# means an image built from this repo ALONE has always been broken, and fails at
+# the first tar_make() with "there is no package called 'Rfast'". Found
+# 2026-08-13 by rebuilding from a clean checkout; the rebuilt image differed from
+# the working one by exactly this one package out of 179.
+#
+# Installed here rather than added to renv.lock so the fix is visible next to the
+# reason. It resolves from the same pinned p3m snapshot as everything else (see
+# the CRAN env var in the base image), so the version is reproducible.
+RUN R -s -e "install.packages('Rfast'); if (!requireNamespace('Rfast', quietly = TRUE)) stop('Rfast failed to install')"
+
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
