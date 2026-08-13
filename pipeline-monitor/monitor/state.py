@@ -130,7 +130,7 @@ def build_status(probe: Probe, now: datetime) -> dict:
         "state": run_state,
         "pid": process.get("pid"),
         "started_at": _iso(created),
-        "elapsed_seconds": _elapsed_seconds(created, now),
+        "elapsed_seconds": _run_elapsed_seconds(created, docket, run_state, now),
         "targets_version": process.get("version_targets"),
         "r_version": process.get("version_r"),
         "container": _container_field(container_info),
@@ -401,10 +401,35 @@ def _clamped_fraction(numerator, denominator):
     return max(0.0, min(1.0, numerator / denominator))
 
 
-def _elapsed_seconds(created, now):
+def _run_elapsed_seconds(created, docket, run_state, now):
+    """`run.elapsed_seconds` -- the headline's "elapsed"/"ran for" figure, and
+    (via `started_at + elapsed_seconds` in render.py) the idle headline's
+    "finished at" clock too.
+
+    A run actually `running` is legitimately measured against wall-clock
+    `now` -- that's the only honest answer to "how long has this been going
+    so far". A run that is no longer in progress is a different question,
+    and answering it with `now - created` is the bug this replaces: that
+    figure keeps growing for as long as the monitor page has sat idle after
+    the run ended, so a run that took a few minutes can read "1 hour 6
+    minutes" simply because nobody looked at the page for an hour. `idle`
+    and `failed` must instead be anchored on the run's own last recorded
+    event -- the newest `finished_at` across the docket. This anchor works
+    for both a clean finish and a mid-run failure alike, since an errored
+    target's `meta` row still carries a decoded `time` (see `_build_docket`).
+    If nothing ever finished this run there is no recorded end to measure
+    against, and the honest answer is `None`, not a guess built from `now`.
+    """
     if created is None:
         return None
-    return max(0.0, (now - created).total_seconds())
+    if run_state == "running":
+        return max(0.0, (now - created).total_seconds())
+    finished_times = [
+        d["_finished_at_dt"] for d in docket if d.get("_finished_at_dt") is not None
+    ]
+    if not finished_times:
+        return None
+    return max(0.0, (max(finished_times) - created).total_seconds())
 
 
 # ---------------------------------------------------------------------------

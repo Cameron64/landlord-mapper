@@ -548,3 +548,26 @@ class LogPanelSurvivesSwapTests(unittest.TestCase):
         # what makes "reopened after a swap" behave the same as "opened for
         # the first time".
         self.assertIn('getAttribute("data-loaded") === "true"', LOG_JS)
+
+
+class IdleHeadlineUsesRecordedDurationTests(unittest.TestCase):
+    """Defect 3, at the render layer: render.py's idle headline computes
+    `finished_clock = started_at + elapsed_seconds` and never touches a
+    clock itself, so once `state.py` hands it a correctly-anchored
+    `elapsed_seconds` (see test_state.py's IdleElapsedNotWallClockTests),
+    the headline is correct for free. This pins that render.py's side of the
+    contract (the arithmetic, not the data source) was already sound."""
+
+    def test_idle_headline_shows_recorded_duration_and_matching_finish_clock(self):
+        status = _base_status()
+        status["run"] = {
+            "state": "idle", "pid": None,
+            "started_at": "2026-08-06T12:00:00Z",
+            "elapsed_seconds": 360,  # what state.py now guarantees: the run's real duration
+            "targets_version": "1.11.4", "r_version": "4.5.2",
+            "container": {"name": "lm-pipeline", "up": False, "started_at": None},
+        }
+        status["progress"]["running"] = []
+        html = render.render_page(status)
+        self.assertIn("took 6m 00s", html)
+        self.assertIn('Finished <time data-utc="2026-08-06T12:06:00Z"', html)

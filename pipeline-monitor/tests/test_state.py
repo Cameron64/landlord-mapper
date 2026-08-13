@@ -292,6 +292,79 @@ class FailurePathTests(unittest.TestCase):
         self.assertIsNone(docket_by_name["a"]["warning_text"])
 
 
+class IdleElapsedNotWallClockTests(unittest.TestCase):
+    """Defect 3: `run.elapsed_seconds` must reflect the run's own recorded
+    duration once the run is no longer in progress, not `now - created`.
+    Before the fix, `_elapsed_seconds` always computed `now - created`, so an
+    idle or failed run's reported duration grew for as long as the monitor
+    page had been left open after the run actually ended -- a run that took
+    a few minutes could display "1 hour 6 minutes" simply because nobody
+    looked at the page for an hour."""
+
+    def test_idle_elapsed_seconds_is_pinned_to_recorded_duration_not_now(self):
+        created = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        finished = created + timedelta(minutes=6)  # the run actually took 6 minutes
+        progress = _progress_text([("a", "dispatched"), ("a", "completed")])
+        meta = _meta_text([_meta_row("a", finished, 360.0)])
+        probe = FakeProbe(
+            reachable=True, container=EXITED_CLEAN, progress=progress, meta=meta,
+            process=_process_text(created),
+        )
+        # 'now' is a full hour after the run actually finished -- this must
+        # not leak into the reported duration.
+        far_future_now = finished + timedelta(hours=1)
+        status = state.build_status(probe, far_future_now)
+
+        self.assertEqual(status["run"]["state"], "idle")
+        self.assertAlmostEqual(status["run"]["elapsed_seconds"], 360.0, places=3)
+
+    def test_failed_elapsed_seconds_is_also_pinned_to_the_recorded_failure_time(self):
+        """The same root cause affects `failed`: `run.state` is 'not in
+        progress' there too, and the plan's fix statement covers both."""
+        created = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+        errored_at = created + timedelta(seconds=45)
+        progress = _progress_text([("a", "dispatched"), ("a", "errored")])
+        meta = _meta_text([_meta_row("a", errored_at, 45.0, error="boom")])
+        probe = FakeProbe(
+            reachable=True, container=EXITED_DIRTY, progress=progress, meta=meta,
+            process=_process_text(created),
+        )
+        far_future_now = errored_at + timedelta(hours=2)
+        status = state.build_status(probe, far_future_now)
+
+        self.assertEqual(status["run"]["state"], "failed")
+        self.assertAlmostEqual(status["run"]["elapsed_seconds"], 45.0, places=3)
+
+    def test_running_elapsed_seconds_still_tracks_wall_clock(self):
+        """Confirms the fix did not also break the path that legitimately
+        needs `now`: a run actually in progress has no 'finished_at' yet, so
+        elapsed time can only be measured against the current moment."""
+        created = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        progress = _progress_text([("a", "dispatched")])
+        probe = FakeProbe(
+            reachable=True, container=RUNNING, progress=progress,
+            meta="name|type|data\n", process=_process_text(created),
+        )
+        status = state.build_status(probe, created + timedelta(seconds=90))
+        self.assertAlmostEqual(status["run"]["elapsed_seconds"], 90.0, places=3)
+
+    def test_idle_with_nothing_ever_finished_reports_none_not_a_guess(self):
+        """If a run somehow never produced a single finished target (e.g.
+        the container exited immediately), there is no recorded end to
+        anchor on -- the honest answer is null, not `now - created`."""
+        created = datetime(2026, 1, 1, tzinfo=timezone.utc)
+        status = state.build_status(
+            FakeProbe(
+                reachable=True, container=EXITED_CLEAN,
+                progress="name|type|parent|branches|progress\n",
+                meta="name|type|data\n", process=_process_text(created),
+            ),
+            created + timedelta(hours=3),
+        )
+        self.assertEqual(status["run"]["state"], "idle")
+        self.assertIsNone(status["run"]["elapsed_seconds"])
+
+
 class ProgressFractionAndEtaTests(unittest.TestCase):
     """PLAN.md §5, with numbers chosen so the expected fraction/ETA can be
     computed by hand rather than re-deriving the formula under test."""
